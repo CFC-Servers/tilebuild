@@ -1,7 +1,6 @@
 TOOL.Category = "Construction"
 TOOL.Name = "Tile Build"
---TOOL.RightClickAutomatic = true
---move stuff out of render into think, use self to get around previous blockades.
+
 local dist, startpos, endpos, lastpos, active, invert = Vector( 0, 0, 0 ), Vector( 0, 0, 0 ), Vector( 0, 0, 0 ), Vector( 0, 0, 0 ), false, false
 local linetable = {}
 local finalrotation = Angle( 0, 0, 0 )
@@ -16,7 +15,8 @@ local snapamount = 11.9
 local doubletapprevention = 0
 local lastmax = Vector( 0, 0, 0 )
 local dynamicsnappos = Vector( 0, 0, 0 )
-local finalrotationdynamic = Vector( 0, 0, 0 )
+local finalrotationdynamic = Angle( 0, 0, 0 )
+
 TOOL.ClientConVar["material"] = ""
 TOOL.ClientConVar["red"] = 255
 TOOL.ClientConVar["green"] = 255
@@ -369,9 +369,9 @@ local platetable = {
 }
 
 if SERVER then
-    util.AddNetworkString( "createsmplate" )
-    util.AddNetworkString( "logsmplate" )
-    util.AddNetworkString( "tilebuildsendaabb" )
+    util.AddNetworkString( "tilebuild_createsmplate" )
+    util.AddNetworkString( "tilebuild_logsmplate" )
+    util.AddNetworkString( "tilebuild_sendaabb" )
 end
 
 local tool, currentproptype
@@ -419,11 +419,16 @@ end
 
 local function tilebuildclick( ply )
     if CLIENT then
-        tool = LocalPlayer():GetTool( "tilebuild" )
-        currentproptype = platetable[tostring( tool:GetClientInfo( "proptype" ) )] or platetable["plastic"]
-
         if active then
             ghostprop:SetNoDraw( true )
+            net.Start( "tilebuild_createsmplate" )
+            net.WriteVector( LocalPlayer().tilebuild_lastmax or Vector() )
+            net.WriteString( finalmodel )
+            net.WriteAngle( finalrotationdynamic )
+            net.WriteVector( finalpos )
+            net.WriteColor( Color( tool:GetClientNumber( "red" ), tool:GetClientNumber( "green" ), tool:GetClientNumber( "blue" ), tool:GetClientNumber( "alpha" ) ) )
+            net.WriteString( tool:GetClientInfo( "material" ) )
+            net.SendToServer()
         else
             snapamount = currentproptype[5] / tool:GetClientNumber( "snapdivision" )
             local hitpos = LocalPlayer():GetEyeTrace().HitPos
@@ -442,6 +447,9 @@ local function tilebuildclick( ply )
             rotprop = ents.CreateClientProp( "prop_dynamic" )
             rotprop:SetModel( "models/hunter/blocks/cube025x025x025.mdl" )
             rotprop:SetNoDraw( true )
+
+            tool = LocalPlayer():GetTool( "tilebuild" )
+            currentproptype = platetable[tostring( tool:GetClientInfo( "proptype" ) )] or platetable["plastic"]
         end
 
         active = not active
@@ -449,29 +457,6 @@ local function tilebuildclick( ply )
 
     if SERVER and ply.tilebuild_active then
         ply:GetTool( "tilebuild" ):SetStage( 0 )
-
-        if ply:CheckLimit( "props" ) then
-            local prop = ents.Create( "prop_physics" )
-            prop:SetModel( ply.tilebuild_model )
-            prop:SetPos( ply.tilebuild_pos )
-            prop:SetAngles( ply.tilebuild_angle )
-            prop:SetRenderMode( RENDERMODE_TRANSCOLOR )
-            prop:SetColor( ply.tilebuild_color )
-
-            if ply.tilebuild_material ~= "No_Material" then
-                prop:SetMaterial( ply.tilebuild_material )
-            end
-
-            prop:Spawn()
-            prop:GetPhysicsObject():EnableMotion( false )
-            prop:SetCreator( ply )
-            ply:AddCount( "props", prop )
-            cleanup.Add( ply, "props", prop )
-            undo.Create( "prop" )
-            undo.AddEntity( prop )
-            undo.SetPlayer( ply )
-            undo.Finish()
-        end
     else
         ply:GetTool( "tilebuild" ):SetStage( 1 )
     end
@@ -497,6 +482,11 @@ function TOOL:LeftClick( tr )
         tr.HitPos = ply.tilebuild_lastmax
     end
 
+    if SERVER then
+        ply.tilebuild_spawntime = CurTime() + 1
+        ply.tilebuild_canspawn = true
+    end
+
     return true
 end
 
@@ -508,8 +498,7 @@ end
 
 function TOOL:RightClick()
     if SERVER then return end
-    print( "netStart createsmplate" )
-    net.Start( "logsmplate" )
+    net.Start( "tilebuild_logsmplate" )
     net.SendToServer()
 end
 
@@ -533,8 +522,7 @@ function TOOL:Think()
     if ply:GetVar( "tilebuildtargetprop" ) ~= traceent:EntIndex() then
         local aabbmin, aabbmax = ply:GetEyeTrace().Entity:GetPhysicsObject():GetAABB()
         ply:SetVar( "tilebuildtargetprop", traceent:EntIndex() )
-        print( "netStart tilebuildsendaabb" )
-        net.Start( "tilebuildsendaabb" )
+        net.Start( "tilebuild_sendaabb" )
         net.WriteVector( aabbmin )
         net.WriteVector( aabbmax )
         net.WriteAngle( ply:GetEyeTrace().Entity:GetAngles() )
@@ -543,6 +531,7 @@ function TOOL:Think()
     end
 end
 
+local material = Material( "gm_construct/color_room" )
 hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
     if bSkybox then return end
     tool = LocalPlayer():GetTool( "tilebuild" )
@@ -554,12 +543,12 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
         targetprop = game.GetWorld()
     end
 
-    render.SetMaterial( Material( "gm_construct/color_room" ) )
+    render.SetMaterial( material )
     endpos = LocalPlayer():GetAimVector() * dist + LocalPlayer():EyePos() + targetprop:GetPos() - startpos
     endpos = targetprop:WorldToLocal( endpos ) + startpos
 
     if LocalPlayer():GetVar( "tilebuilddeployed" ) then
-        local rawcorner = LocalPlayer():GetVar( "tilebuildaabbmin" ) or Vector( 0, 0, 0 ) --targetprop:OBBMins()--LocalPlayer():GetNWVector("TargetAABB")
+        local rawcorner = LocalPlayer():GetVar( "tilebuildaabbmin" ) or Vector( 0, 0, 0 )
         local diffmin = LocalPlayer():GetVar( "tilebuildaabbmin" ) or Vector( 0, 0, 0 )
         local diffmax = LocalPlayer():GetVar( "tilebuildaabbmax" ) or Vector( 0, 0, 0 )
         local center = targetprop:WorldSpaceCenter()
@@ -571,8 +560,6 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
             diffmax = stepstone
         end
 
-        --[[render.DrawLine(center, center + targetprop:GetUp() * 20, Color( 255, 255, 255 ))
-		render.DrawLine(center, center + targetprop:GetUp() * -20, Color( 0, 0, 0 ))]]
         local diff = diffmin - diffmax
         local testcorner = Vector( rawcorner.x, rawcorner.y, rawcorner.z )
         testcorner:Rotate( targetprop:GetAngles() )
@@ -599,8 +586,7 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
             render.DrawSphere( zedgesnappos, .5, 5, 5, Color( 255, 255, 0 ) )
             render.DrawSphere( finaltestgridpos, .5, 5, 5, Color( 255, 0, 255 ) )
             render.DrawSphere( testcorner, .5, 5, 5, Color( 255, 255, 255 ) )
-            --render.DrawSphere(testcorner, 2, 5, 5, Color( 0, 0, 0 ))
-            render.SetMaterial( Material( "gm_construct/color_room" ) )
+            render.SetMaterial( material )
         end
 
         if tool:GetClientNumber( "guide" ) == 1 then
@@ -722,7 +708,6 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
                 if IsValid( ghostprop ) then
                     ghostprop:SetModel( finalmodel )
                     ghostprop:SetRenderMode( RENDERMODE_GLOW )
-                    ghostprop:SetRenderFX( 15 )
                     ghostprop:SetAngles( finalrotation )
                     ghostprop:SetMaterial( material )
                     ghostprop:SetColor( color )
@@ -745,16 +730,6 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
                         local gpcenter = ghostprop:LocalToWorld( ghostprop:OBBCenter() )
                         local toolend = gpcenter + gpcenter - startpos
                         LocalPlayer().tilebuild_lastmax = toolend
-
-                        print( "netStart createsmplate" )
-                        net.Start( "createsmplate" )
-                        net.WriteVector( toolend )
-                        net.WriteString( finalmodel )
-                        net.WriteAngle( finalrotationdynamic )
-                        net.WriteVector( finalpos )
-                        net.WriteColor( Color( tool:GetClientNumber( "red" ), tool:GetClientNumber( "green" ), tool:GetClientNumber( "blue" ), tool:GetClientNumber( "alpha" ) ) )
-                        net.WriteString( tool:GetClientInfo( "material" ) )
-                        net.SendToServer()
 
                         timer.Create( "waitforcolor", .01, 1, function()
                             ghostprop:SetNoDraw( false )
@@ -794,7 +769,6 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
                     render.DrawWireframeSphere( spherepos1 + startpos - cornershit, 2, 4, 4, color )
                     render.DrawWireframeSphere( spherepos2 + startpos - cornershit + inversion * 2, 2, 4, 4, color )
                     render.DrawWireframeSphere( spherepos1 + startpos - cornershit + spherepos3 + inversion, 2, 4, 4, color )
-                    --render.DrawLine(v[1] + startpos - cornerpos, cornerpos + Vector(0,100,0), Color(255,255,255))
                 end
             end
         else
@@ -918,16 +892,42 @@ function TOOL.BuildCPanel( DForm )
 end
 
 if SERVER then
-    net.Receive( "createsmplate", function( _, ply )
+    net.Receive( "tilebuild_createsmplate", function( _, ply )
+        if ply.tilebuild_canspawn and  CurTime() > ply.tilebuild_spawntime then return end
+        ply.tilebuild_canspawn = false
+
         ply.tilebuild_lastmax = net.ReadVector()
-        ply.tilebuild_model = net.ReadString()
-        ply.tilebuild_angle = net.ReadAngle()
-        ply.tilebuild_pos = net.ReadVector()
-        ply.tilebuild_color = net.ReadColor()
-        ply.tilebuild_material = net.ReadString()
+        local propModel = net.ReadString()
+        local propAng = net.ReadAngle()
+        local propPos = net.ReadVector()
+        local propColor = net.ReadColor()
+        local propMaterial = net.ReadString()
+
+        if ply:CheckLimit( "props" ) then
+            local prop = ents.Create( "prop_physics" )
+            prop:SetModel( propModel )
+            prop:SetPos( propPos )
+            prop:SetAngles( propAng )
+            prop:SetRenderMode( RENDERMODE_TRANSCOLOR )
+            prop:SetColor( propColor )
+
+            if propMaterial ~= "No_Material" then
+                prop:SetMaterial( propMaterial )
+            end
+
+            prop:Spawn()
+            prop:GetPhysicsObject():EnableMotion( false )
+            prop:SetCreator( ply )
+            ply:AddCount( "props", prop )
+            cleanup.Add( ply, "props", prop )
+            undo.Create( "prop" )
+            undo.AddEntity( prop )
+            undo.SetPlayer( ply )
+            undo.Finish()
+        end
     end )
 
-    net.Receive( "tilebuildsendaabb", function()
+    net.Receive( "tilebuild_sendaabb", function()
         if active then return end
         local aabbmin = net.ReadVector()
         local aabbmax = net.ReadVector()
@@ -962,5 +962,5 @@ if SERVER then
         end
     end
 
-    net.Receive( "logsmplate", rightclicksingleplayerbs )
+    net.Receive( "tilebuild_logsmplate", rightclicksingleplayerbs )
 end
