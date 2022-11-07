@@ -16,6 +16,8 @@ local doubletapprevention = 0
 local lastmax = Vector( 0, 0, 0 )
 local dynamicsnappos = Vector( 0, 0, 0 )
 local finalrotationdynamic = Angle( 0, 0, 0 )
+local tool
+local currentproptype
 
 TOOL.ClientConVar["material"] = ""
 TOOL.ClientConVar["red"] = 255
@@ -368,13 +370,79 @@ local platetable = {
     ["strongglass"] = { 2, 1, strongglass, 0.5497, 11.863 },
 }
 
-if SERVER then
-    util.AddNetworkString( "tilebuild_createsmplate" )
-    util.AddNetworkString( "tilebuild_logsmplate" )
-    util.AddNetworkString( "tilebuild_sendaabb" )
-end
+list.Add( "tilebuildmaterials", "No_Material" )
+list.Add( "tilebuildmaterials", "models/wireframe" )
+list.Add( "tilebuildmaterials", "debug/env_cubemap_model" )
+list.Add( "tilebuildmaterials", "models/shadertest/shader3" )
+list.Add( "tilebuildmaterials", "models/shadertest/shader4" )
+list.Add( "tilebuildmaterials", "models/shadertest/shader5" )
+list.Add( "tilebuildmaterials", "models/shiny" )
+list.Add( "tilebuildmaterials", "models/debug/debugwhite" )
+list.Add( "tilebuildmaterials", "Models/effects/comball_sphere" )
+list.Add( "tilebuildmaterials", "Models/effects/comball_tape" )
+list.Add( "tilebuildmaterials", "Models/effects/splodearc_sheet" )
+list.Add( "tilebuildmaterials", "Models/effects/vol_light001" )
+list.Add( "tilebuildmaterials", "models/props_combine/stasisshield_sheet" )
+list.Add( "tilebuildmaterials", "models/props_combine/portalball001_sheet" )
+list.Add( "tilebuildmaterials", "models/props_combine/com_shield001a" )
+list.Add( "tilebuildmaterials", "models/props_c17/frostedglass_01a" )
+list.Add( "tilebuildmaterials", "models/props_lab/Tank_Glass001" )
+list.Add( "tilebuildmaterials", "models/props_combine/tprings_globe" )
+list.Add( "tilebuildmaterials", "models/rendertarget" )
+list.Add( "tilebuildmaterials", "models/screenspace" )
+list.Add( "tilebuildmaterials", "brick/brick_model" )
+list.Add( "tilebuildmaterials", "models/props_pipes/GutterMetal01a" )
+list.Add( "tilebuildmaterials", "models/props_pipes/Pipesystem01a_skin3" )
+list.Add( "tilebuildmaterials", "models/props_wasteland/wood_fence01a" )
+list.Add( "tilebuildmaterials", "models/props_foliage/tree_deciduous_01a_trunk" )
+list.Add( "tilebuildmaterials", "models/props_c17/FurnitureFabric003a" )
+list.Add( "tilebuildmaterials", "models/props_c17/FurnitureMetal001a" )
+list.Add( "tilebuildmaterials", "models/props_c17/paper01" )
+list.Add( "tilebuildmaterials", "models/flesh" )
+list.Add( "tilebuildmaterials", "phoenix_storms/metalset_1-2" )
+list.Add( "tilebuildmaterials", "phoenix_storms/metalfloor_2-3" )
+list.Add( "tilebuildmaterials", "phoenix_storms/plastic" )
+list.Add( "tilebuildmaterials", "phoenix_storms/wood" )
+list.Add( "tilebuildmaterials", "phoenix_storms/bluemetal" )
+list.Add( "tilebuildmaterials", "phoenix_storms/cube" )
+list.Add( "tilebuildmaterials", "phoenix_storms/dome" )
+list.Add( "tilebuildmaterials", "phoenix_storms/gear" )
+list.Add( "tilebuildmaterials", "phoenix_storms/stripes" )
+list.Add( "tilebuildmaterials", "phoenix_storms/wire/pcb_green" )
+list.Add( "tilebuildmaterials", "phoenix_storms/wire/pcb_red" )
+list.Add( "tilebuildmaterials", "phoenix_storms/wire/pcb_blue" )
+list.Add( "tilebuildmaterials", "hunter/myplastic" )
+list.Add( "tilebuildmaterials", "models/XQM/LightLinesRed_tool" )
+list.Set( "tilebuildproptypes", "models/squad/sf_plates/sf_plate4x4.mdl" )
+list.Set( "tilebuildproptypes", "models/props_phx/construct/metal_plate1.mdl" )
+list.Set( "tilebuildproptypes", "models/maxofs2d/lamp_projector.mdl" )
 
-local tool, currentproptype
+local proptypes = {
+    ["models/squad/sf_plates/sf_plate4x4.mdl"] = {
+        ["tilebuild_proptype"] = "superflat"
+    },
+    ["models/props_phx/construct/metal_plate1.mdl"] = {
+        ["tilebuild_proptype"] = "steel"
+    },
+    ["models/props_phx/construct/metal_wire1x1.mdl"] = {
+        ["tilebuild_proptype"] = "steelframe"
+    },
+    ["models/hunter/plates/plate1x1.mdl"] = {
+        ["tilebuild_proptype"] = "plastic"
+    },
+    ["models/props_phx/construct/wood/wood_panel1x1.mdl"] = {
+        ["tilebuild_proptype"] = "wood"
+    },
+    ["models/props_phx/construct/wood/wood_wire1x1.mdl"] = {
+        ["tilebuild_proptype"] = "woodframe"
+    },
+    ["models/props_phx/construct/glass/glass_plate1x1.mdl"] = {
+        ["tilebuild_proptype"] = "glass"
+    },
+    ["models/props_phx/construct/windows/window1x1.mdl"] = {
+        ["tilebuild_proptype"] = "strongglass"
+    },
+}
 
 if CLIENT then
     ghostprop = ents.CreateClientProp( "prop_dynamic" )
@@ -794,80 +862,6 @@ function TOOL:Holster()
     end
 end
 
-list.Add( "tilebuildmaterials", "No_Material" )
-list.Add( "tilebuildmaterials", "models/wireframe" )
-list.Add( "tilebuildmaterials", "debug/env_cubemap_model" )
-list.Add( "tilebuildmaterials", "models/shadertest/shader3" )
-list.Add( "tilebuildmaterials", "models/shadertest/shader4" )
-list.Add( "tilebuildmaterials", "models/shadertest/shader5" )
-list.Add( "tilebuildmaterials", "models/shiny" )
-list.Add( "tilebuildmaterials", "models/debug/debugwhite" )
-list.Add( "tilebuildmaterials", "Models/effects/comball_sphere" )
-list.Add( "tilebuildmaterials", "Models/effects/comball_tape" )
-list.Add( "tilebuildmaterials", "Models/effects/splodearc_sheet" )
-list.Add( "tilebuildmaterials", "Models/effects/vol_light001" )
-list.Add( "tilebuildmaterials", "models/props_combine/stasisshield_sheet" )
-list.Add( "tilebuildmaterials", "models/props_combine/portalball001_sheet" )
-list.Add( "tilebuildmaterials", "models/props_combine/com_shield001a" )
-list.Add( "tilebuildmaterials", "models/props_c17/frostedglass_01a" )
-list.Add( "tilebuildmaterials", "models/props_lab/Tank_Glass001" )
-list.Add( "tilebuildmaterials", "models/props_combine/tprings_globe" )
-list.Add( "tilebuildmaterials", "models/rendertarget" )
-list.Add( "tilebuildmaterials", "models/screenspace" )
-list.Add( "tilebuildmaterials", "brick/brick_model" )
-list.Add( "tilebuildmaterials", "models/props_pipes/GutterMetal01a" )
-list.Add( "tilebuildmaterials", "models/props_pipes/Pipesystem01a_skin3" )
-list.Add( "tilebuildmaterials", "models/props_wasteland/wood_fence01a" )
-list.Add( "tilebuildmaterials", "models/props_foliage/tree_deciduous_01a_trunk" )
-list.Add( "tilebuildmaterials", "models/props_c17/FurnitureFabric003a" )
-list.Add( "tilebuildmaterials", "models/props_c17/FurnitureMetal001a" )
-list.Add( "tilebuildmaterials", "models/props_c17/paper01" )
-list.Add( "tilebuildmaterials", "models/flesh" )
-list.Add( "tilebuildmaterials", "phoenix_storms/metalset_1-2" )
-list.Add( "tilebuildmaterials", "phoenix_storms/metalfloor_2-3" )
-list.Add( "tilebuildmaterials", "phoenix_storms/plastic" )
-list.Add( "tilebuildmaterials", "phoenix_storms/wood" )
-list.Add( "tilebuildmaterials", "phoenix_storms/bluemetal" )
-list.Add( "tilebuildmaterials", "phoenix_storms/cube" )
-list.Add( "tilebuildmaterials", "phoenix_storms/dome" )
-list.Add( "tilebuildmaterials", "phoenix_storms/gear" )
-list.Add( "tilebuildmaterials", "phoenix_storms/stripes" )
-list.Add( "tilebuildmaterials", "phoenix_storms/wire/pcb_green" )
-list.Add( "tilebuildmaterials", "phoenix_storms/wire/pcb_red" )
-list.Add( "tilebuildmaterials", "phoenix_storms/wire/pcb_blue" )
-list.Add( "tilebuildmaterials", "hunter/myplastic" )
-list.Add( "tilebuildmaterials", "models/XQM/LightLinesRed_tool" )
-list.Set( "tilebuildproptypes", "models/squad/sf_plates/sf_plate4x4.mdl" )
-list.Set( "tilebuildproptypes", "models/props_phx/construct/metal_plate1.mdl" )
-list.Set( "tilebuildproptypes", "models/maxofs2d/lamp_projector.mdl" )
-
-local proptypes = {
-    ["models/squad/sf_plates/sf_plate4x4.mdl"] = {
-        ["tilebuild_proptype"] = "superflat"
-    },
-    ["models/props_phx/construct/metal_plate1.mdl"] = {
-        ["tilebuild_proptype"] = "steel"
-    },
-    ["models/props_phx/construct/metal_wire1x1.mdl"] = {
-        ["tilebuild_proptype"] = "steelframe"
-    },
-    ["models/hunter/plates/plate1x1.mdl"] = {
-        ["tilebuild_proptype"] = "plastic"
-    },
-    ["models/props_phx/construct/wood/wood_panel1x1.mdl"] = {
-        ["tilebuild_proptype"] = "wood"
-    },
-    ["models/props_phx/construct/wood/wood_wire1x1.mdl"] = {
-        ["tilebuild_proptype"] = "woodframe"
-    },
-    ["models/props_phx/construct/glass/glass_plate1x1.mdl"] = {
-        ["tilebuild_proptype"] = "glass"
-    },
-    ["models/props_phx/construct/windows/window1x1.mdl"] = {
-        ["tilebuild_proptype"] = "strongglass"
-    },
-}
-
 function TOOL.BuildCPanel( DForm )
     DForm:SetName( "Tile Build" )
     DForm:CheckBox( "Corner helper.", "tilebuild_guide" )
@@ -892,6 +886,10 @@ function TOOL.BuildCPanel( DForm )
 end
 
 if SERVER then
+    util.AddNetworkString( "tilebuild_createsmplate" )
+    util.AddNetworkString( "tilebuild_logsmplate" )
+    util.AddNetworkString( "tilebuild_sendaabb" )
+
     net.Receive( "tilebuild_createsmplate", function( _, ply )
         if ply.tilebuild_canspawn and  CurTime() > ply.tilebuild_spawntime then return end
         ply.tilebuild_canspawn = false
