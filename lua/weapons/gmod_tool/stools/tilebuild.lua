@@ -532,7 +532,7 @@ local function tilebuildclick( ply )
     ply.tilebuild_active = not ply.tilebuild_active
 end
 
-function TOOL:LeftClick( tr )
+function TOOL:LeftClick()
     local ply = self:GetOwner()
 
     if doubletapprevention < CurTime() then
@@ -544,10 +544,6 @@ function TOOL:LeftClick( tr )
         end
 
         tilebuildclick( self:GetOwner() )
-    end
-
-    if not ply.tilebuild_active then
-        tr.HitPos = ply.tilebuild_lastmax
     end
 
     if SERVER then
@@ -920,18 +916,6 @@ if SERVER then
         end
     end )
 
-    net.Receive( "tilebuild_sendaabb", function()
-        if active then return end
-        local aabbmin = net.ReadVector()
-        local aabbmax = net.ReadVector()
-        local angles = net.ReadAngle()
-        local entnum = net.ReadInt( 16 )
-        LocalPlayer():SetVar( "tilebuildaabbmin", aabbmin )
-        LocalPlayer():SetVar( "tilebuildaabbmax", aabbmax )
-        LocalPlayer():SetVar( "tilebuildtargetrotation", angles )
-        LocalPlayer():SetVar( "tilebuildtargetprop", entnum )
-    end )
-
     local function rightclicksingleplayerbs( _, ply )
         if not ply.tilebuild_canrightclick then return end
         ply.tilebuild_canrightclick = false
@@ -959,4 +943,18 @@ if SERVER then
     end
 
     net.Receive( "tilebuild_logsmplate", rightclicksingleplayerbs )
+end
+
+if CLIENT then
+    net.Receive( "tilebuild_sendaabb", function()
+        if active then return end
+        local aabbmin = net.ReadVector()
+        local aabbmax = net.ReadVector()
+        local angles = net.ReadAngle()
+        local entnum = net.ReadInt( 16 )
+        LocalPlayer():SetVar( "tilebuildaabbmin", aabbmin )
+        LocalPlayer():SetVar( "tilebuildaabbmax", aabbmax )
+        LocalPlayer():SetVar( "tilebuildtargetrotation", angles )
+        LocalPlayer():SetVar( "tilebuildtargetprop", entnum )
+    end )
 end
