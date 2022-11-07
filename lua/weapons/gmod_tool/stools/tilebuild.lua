@@ -497,7 +497,7 @@ function cleanup.Add( ply, _, ent )
 end
 
 function TOOL:RightClick()
-    if SERVER then return end
+    if SERVER then self:GetOwner().tilebuild_canrightclick = true return end
     net.Start( "tilebuild_logsmplate" )
     net.SendToServer()
 end
@@ -940,6 +940,9 @@ if SERVER then
     end )
 
     local function rightclicksingleplayerbs( _, ply )
+        if not ply.tilebuild_canrightclick then return end
+        ply.tilebuild_canrightclick = false
+
         local ent = ply:GetEyeTrace().Entity
         if ent.tilebuild_creator ~= ply then return end
 
