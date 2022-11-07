@@ -532,7 +532,7 @@ local function tilebuildclick( ply )
     ply.tilebuild_active = not ply.tilebuild_active
 end
 
-function TOOL:LeftClick( tr )
+function TOOL:LeftClick()
     local ply = self:GetOwner()
 
     if doubletapprevention < CurTime() then
@@ -656,6 +656,7 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
         if tool:GetClientNumber( "guide" ) == 1 then
             if not active then
                 local display = finaltestgridpos
+                debugoverlay.Cross( display, 5, 0.1, Color( 255, 255, 255 ), true )
 
                 if targetprop == game.GetWorld() then
                     display = hitpos
@@ -916,18 +917,6 @@ if SERVER then
         end
     end )
 
-    net.Receive( "tilebuild_sendaabb", function()
-        if active then return end
-        local aabbmin = net.ReadVector()
-        local aabbmax = net.ReadVector()
-        local angles = net.ReadAngle()
-        local entnum = net.ReadInt( 16 )
-        LocalPlayer():SetVar( "tilebuildaabbmin", aabbmin )
-        LocalPlayer():SetVar( "tilebuildaabbmax", aabbmax )
-        LocalPlayer():SetVar( "tilebuildtargetrotation", angles )
-        LocalPlayer():SetVar( "tilebuildtargetprop", entnum )
-    end )
-
     local function rightclicksingleplayerbs( _, ply )
         if not ply.tilebuild_canrightclick then return end
         ply.tilebuild_canrightclick = false
@@ -955,4 +944,18 @@ if SERVER then
     end
 
     net.Receive( "tilebuild_logsmplate", rightclicksingleplayerbs )
+end
+
+if CLIENT then
+    net.Receive( "tilebuild_sendaabb", function()
+        if active then return end
+        local aabbmin = net.ReadVector()
+        local aabbmax = net.ReadVector()
+        local angles = net.ReadAngle()
+        local entnum = net.ReadInt( 16 )
+        LocalPlayer():SetVar( "tilebuildaabbmin", aabbmin )
+        LocalPlayer():SetVar( "tilebuildaabbmax", aabbmax )
+        LocalPlayer():SetVar( "tilebuildtargetrotation", angles )
+        LocalPlayer():SetVar( "tilebuildtargetprop", entnum )
+    end )
 end
