@@ -656,7 +656,6 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
         if tool:GetClientNumber( "guide" ) == 1 then
             if not active then
                 local display = finaltestgridpos
-                debugoverlay.Cross( display, 5, 0.1, Color( 255, 255, 255 ), true )
 
                 if targetprop == game.GetWorld() then
                     display = hitpos
