@@ -743,7 +743,7 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
                 local lastmodel = finalmodel
                 local truemax = Vector( 0, 0, 0 )
 
-                for k, v in ipairs( currentproptype[3] ) do
+                for _, v in ipairs( currentproptype[3] ) do
                     local inversion = Vector( 0, 0, 0 )
                     displacementfix = Vector( 0, 0, 0 )
 
@@ -771,13 +771,13 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
                 end
 
                 local color = Color( tool:GetClientInfo( "red" ), tool:GetClientInfo( "green" ), tool:GetClientInfo( "blue" ), 200 )
-                local material = tool:GetClientInfo( "material" )
+                local materialVar = tool:GetClientInfo( "material" )
 
                 if IsValid( ghostprop ) then
                     ghostprop:SetModel( finalmodel )
                     ghostprop:SetRenderMode( RENDERMODE_GLOW )
                     ghostprop:SetAngles( finalrotation )
-                    ghostprop:SetMaterial( material )
+                    ghostprop:SetMaterial( materialVar )
                     ghostprop:SetColor( color )
                     local preangle = targetprop:GetAngles()
                     targetprop:SetAngles( Angle( 0, 0, 0 ) )
@@ -798,11 +798,6 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
                         local gpcenter = ghostprop:LocalToWorld( ghostprop:OBBCenter() )
                         local toolend = gpcenter + gpcenter - startpos
                         LocalPlayer().tilebuild_lastmax = toolend
-
-                        timer.Create( "waitforcolor", .01, 1, function()
-                            ghostprop:SetNoDraw( false )
-                            ghostprop:DrawModel()
-                        end )
                     end
                 else
                     active = false
