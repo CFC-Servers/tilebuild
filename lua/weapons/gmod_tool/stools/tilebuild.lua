@@ -546,10 +546,6 @@ function TOOL:LeftClick( tr )
         tilebuildclick( self:GetOwner() )
     end
 
-    if not ply.tilebuild_active then
-        tr.HitPos = ply.tilebuild_lastmax
-    end
-
     if SERVER then
         ply.tilebuild_spawntime = CurTime() + 1
         ply.tilebuild_canspawn = true
