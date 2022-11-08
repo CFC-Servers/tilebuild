@@ -554,12 +554,6 @@ function TOOL:LeftClick()
     return true
 end
 
-function cleanup.Add( ply, _, ent )
-    if IsValid( ent ) then
-        ent.tilebuild_creator = ply
-    end
-end
-
 function TOOL:RightClick()
     if SERVER then self:GetOwner().tilebuild_canrightclick = true return end
     net.Start( "tilebuild_logsmplate" )
@@ -909,6 +903,7 @@ if SERVER then
             prop:SetCreator( ply )
             ply:AddCount( "props", prop )
             cleanup.Add( ply, "props", prop )
+            prop.tilebuild_creator = ply
             undo.Create( "prop" )
             undo.AddEntity( prop )
             undo.SetPlayer( ply )
