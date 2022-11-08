@@ -599,6 +599,7 @@ local material = Material( "gm_construct/color_room" )
 hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
     if bSkybox then return end
     tool = LocalPlayer():GetTool( "tilebuild" )
+    if not istable( tool ) then return end
     local hitpos = LocalPlayer():GetEyeTrace().HitPos
     local propnum = LocalPlayer():GetVar( "tilebuildtargetprop" ) or -1
     local targetprop = Entity( propnum )
