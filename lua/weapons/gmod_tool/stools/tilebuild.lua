@@ -598,6 +598,8 @@ end
 local material = Material( "gm_construct/color_room" )
 hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
     if bSkybox then return end
+    if not LocalPlayer():GetVar( "tilebuilddeployed" ) then return end
+
     tool = LocalPlayer():GetTool( "tilebuild" )
     if not istable( tool ) then return end
     local hitpos = LocalPlayer():GetEyeTrace().HitPos
@@ -611,230 +613,227 @@ hook.Add( "PostDrawTranslucentRenderables", "holothink`", function( _, bSkybox )
     render.SetMaterial( material )
     endpos = LocalPlayer():GetAimVector() * dist + LocalPlayer():EyePos() + targetprop:GetPos() - startpos
     endpos = targetprop:WorldToLocal( endpos ) + startpos
+    local rawcorner = LocalPlayer():GetVar( "tilebuildaabbmin" ) or Vector( 0, 0, 0 )
+    local diffmin = LocalPlayer():GetVar( "tilebuildaabbmin" ) or Vector( 0, 0, 0 )
+    local diffmax = LocalPlayer():GetVar( "tilebuildaabbmax" ) or Vector( 0, 0, 0 )
+    local center = targetprop:WorldSpaceCenter()
 
-    if LocalPlayer():GetVar( "tilebuilddeployed" ) then
-        local rawcorner = LocalPlayer():GetVar( "tilebuildaabbmin" ) or Vector( 0, 0, 0 )
-        local diffmin = LocalPlayer():GetVar( "tilebuildaabbmin" ) or Vector( 0, 0, 0 )
-        local diffmax = LocalPlayer():GetVar( "tilebuildaabbmax" ) or Vector( 0, 0, 0 )
-        local center = targetprop:WorldSpaceCenter()
+    if hitpos:Distance( center + targetprop:GetUp() ) > hitpos:Distance( center + targetprop:GetUp() * -1 ) then
+        local stepstone = diffmin
+        diffmin = diffmax
+        rawcorner = diffmax
+        diffmax = stepstone
+    end
 
-        if hitpos:Distance( center + targetprop:GetUp() ) > hitpos:Distance( center + targetprop:GetUp() * -1 ) then
-            local stepstone = diffmin
-            diffmin = diffmax
-            rawcorner = diffmax
-            diffmax = stepstone
-        end
+    local diff = diffmin - diffmax
+    local testcorner = Vector( rawcorner.x, rawcorner.y, rawcorner.z )
+    testcorner:Rotate( targetprop:GetAngles() )
+    testcorner = testcorner + targetprop:GetPos()
+    local weirdoffset = targetprop:WorldSpaceCenter() - targetprop:GetPos()
+    local newhitpos = targetprop:WorldToLocal( hitpos + testcorner - targetprop:WorldSpaceCenter() - weirdoffset )
+    local xedgesnappos = Vector( 1, 0, 0 ) * math.SnapTo( newhitpos.x, snapamount ) - Vector( diff.x, 0, 0 )
+    local yedgesnappos = Vector( 0, 1, 0 ) * math.SnapTo( newhitpos.y, snapamount ) - Vector( 0, diff.y, 0 )
+    local zedgesnappos = Vector( 0, 0, 1 ) * math.SnapTo( newhitpos.z, snapamount ) - Vector( 0, 0, diff.z )
+    local finaltestgridpos = xedgesnappos + yedgesnappos + zedgesnappos
+    finaltestgridpos:Rotate( targetprop:GetAngles() )
+    finaltestgridpos = finaltestgridpos + testcorner
+    dynamicsnappos = finaltestgridpos
+    xedgesnappos:Rotate( targetprop:GetAngles() )
+    xedgesnappos = xedgesnappos + testcorner
+    yedgesnappos:Rotate( targetprop:GetAngles() )
+    yedgesnappos = yedgesnappos + testcorner
+    zedgesnappos:Rotate( targetprop:GetAngles() )
+    zedgesnappos = zedgesnappos + testcorner
 
-        local diff = diffmin - diffmax
-        local testcorner = Vector( rawcorner.x, rawcorner.y, rawcorner.z )
-        testcorner:Rotate( targetprop:GetAngles() )
-        testcorner = testcorner + targetprop:GetPos()
-        local weirdoffset = targetprop:WorldSpaceCenter() - targetprop:GetPos()
-        local newhitpos = targetprop:WorldToLocal( hitpos + testcorner - targetprop:WorldSpaceCenter() - weirdoffset )
-        local xedgesnappos = Vector( 1, 0, 0 ) * math.SnapTo( newhitpos.x, snapamount ) - Vector( diff.x, 0, 0 )
-        local yedgesnappos = Vector( 0, 1, 0 ) * math.SnapTo( newhitpos.y, snapamount ) - Vector( 0, diff.y, 0 )
-        local zedgesnappos = Vector( 0, 0, 1 ) * math.SnapTo( newhitpos.z, snapamount ) - Vector( 0, 0, diff.z )
-        local finaltestgridpos = xedgesnappos + yedgesnappos + zedgesnappos
-        finaltestgridpos:Rotate( targetprop:GetAngles() )
-        finaltestgridpos = finaltestgridpos + testcorner
-        dynamicsnappos = finaltestgridpos
-        xedgesnappos:Rotate( targetprop:GetAngles() )
-        xedgesnappos = xedgesnappos + testcorner
-        yedgesnappos:Rotate( targetprop:GetAngles() )
-        yedgesnappos = yedgesnappos + testcorner
-        zedgesnappos:Rotate( targetprop:GetAngles() )
-        zedgesnappos = zedgesnappos + testcorner
+    if tool:GetClientNumber( "debug" ) == 1 then
+        render.DrawSphere( xedgesnappos, .5, 5, 5, Color( 255, 0, 0 ) )
+        render.DrawSphere( yedgesnappos, .5, 5, 5, Color( 0, 255, 0 ) )
+        render.DrawSphere( zedgesnappos, .5, 5, 5, Color( 255, 255, 0 ) )
+        render.DrawSphere( finaltestgridpos, .5, 5, 5, Color( 255, 0, 255 ) )
+        render.DrawSphere( testcorner, .5, 5, 5, Color( 255, 255, 255 ) )
+        render.SetMaterial( material )
+    end
 
-        if tool:GetClientNumber( "debug" ) == 1 then
-            render.DrawSphere( xedgesnappos, .5, 5, 5, Color( 255, 0, 0 ) )
-            render.DrawSphere( yedgesnappos, .5, 5, 5, Color( 0, 255, 0 ) )
-            render.DrawSphere( zedgesnappos, .5, 5, 5, Color( 255, 255, 0 ) )
-            render.DrawSphere( finaltestgridpos, .5, 5, 5, Color( 255, 0, 255 ) )
-            render.DrawSphere( testcorner, .5, 5, 5, Color( 255, 255, 255 ) )
-            render.SetMaterial( material )
-        end
+    if tool:GetClientNumber( "guide" ) == 1 then
+        if not active then
+            local display = finaltestgridpos
 
-        if tool:GetClientNumber( "guide" ) == 1 then
-            if not active then
-                local display = finaltestgridpos
-
-                if targetprop == game.GetWorld() then
-                    display = hitpos
-                end
-
-                if tool:GetClientNumber( "dynamicsnap" ) == 0 then
-                    display = Vector( math.SnapTo( display.x, snapamount ), math.SnapTo( display.y, snapamount ), math.SnapTo( display.z, snapamount ) )
-                end
-
-                render.DrawSphere( display, 1, 10, 10, Color( 255, 255, 255 ) )
+            if targetprop == game.GetWorld() then
+                display = hitpos
             end
 
-            if active then
-                render.DrawLine( startpos, LocalPlayer():GetAimVector() * dist + LocalPlayer():EyePos(), Color( 255, 255, 255 ) )
-                render.DrawSphere( LocalPlayer():GetAimVector() * dist + LocalPlayer():EyePos(), 1, 10, 10, Color( 255, 255, 255 ) )
-                render.DrawSphere( startpos, 1, 10, 10, Color( 255, 255, 255 ) )
-                render.DrawWireframeBox( startpos, targetprop:GetAngles(), Vector( 0, 0, 0 ), endpos - startpos, Color( 255, 255, 255 ) )
+            if tool:GetClientNumber( "dynamicsnap" ) == 0 then
+                display = Vector( math.SnapTo( display.x, snapamount ), math.SnapTo( display.y, snapamount ), math.SnapTo( display.z, snapamount ) )
             end
+
+            render.DrawSphere( display, 1, 10, 10, Color( 255, 255, 255 ) )
         end
 
         if active then
-            local xline = Vector( endpos.x, startpos.y, startpos.z )
-            local yline = Vector( startpos.x, endpos.y, startpos.z )
-            local zline = Vector( startpos.x, startpos.y, endpos.z )
-            local hitnormal = LocalPlayer():GetEyeTrace().HitNormal
-            local snappednormal = Vector( 1, 0, 0 )
-            snappednormal:Rotate( hitnormal:Angle():SnapTo( "p", 90 ):SnapTo( "y", 90 ):SnapTo( "r", 90 ) )
-            snappednormal = Vector( math.Round( snappednormal.x, 1 ), math.Round( snappednormal.y, 1 ), math.Round( snappednormal.z, 1 ) )
+            render.DrawLine( startpos, LocalPlayer():GetAimVector() * dist + LocalPlayer():EyePos(), Color( 255, 255, 255 ) )
+            render.DrawSphere( LocalPlayer():GetAimVector() * dist + LocalPlayer():EyePos(), 1, 10, 10, Color( 255, 255, 255 ) )
+            render.DrawSphere( startpos, 1, 10, 10, Color( 255, 255, 255 ) )
+            render.DrawWireframeBox( startpos, targetprop:GetAngles(), Vector( 0, 0, 0 ), endpos - startpos, Color( 255, 255, 255 ) )
+        end
+    end
 
-            linetable = {
-                { xline, xline:Distance( startpos ), "x" },
-                { yline, yline:Distance( startpos ), "y" },
-                { zline, zline:Distance( startpos ), "z" }
-            }
+    if active then
+        local xline = Vector( endpos.x, startpos.y, startpos.z )
+        local yline = Vector( startpos.x, endpos.y, startpos.z )
+        local zline = Vector( startpos.x, startpos.y, endpos.z )
+        local hitnormal = LocalPlayer():GetEyeTrace().HitNormal
+        local snappednormal = Vector( 1, 0, 0 )
+        snappednormal:Rotate( hitnormal:Angle():SnapTo( "p", 90 ):SnapTo( "y", 90 ):SnapTo( "r", 90 ) )
+        snappednormal = Vector( math.Round( snappednormal.x, 1 ), math.Round( snappednormal.y, 1 ), math.Round( snappednormal.z, 1 ) )
 
-            table.sort( linetable, function( a, b )
-                return a[2] > b[2]
-            end )
+        linetable = {
+            { xline, xline:Distance( startpos ), "x" },
+            { yline, yline:Distance( startpos ), "y" },
+            { zline, zline:Distance( startpos ), "z" }
+        }
 
-            local firstpriority = currentproptype[1]
-            local secondpriority = currentproptype[2]
-            local longvector = ( linetable[firstpriority][1] - startpos ):GetNormalized()
-            local longangle = longvector:Angle()
-            longangle = Angle( longangle.x, longangle.y, longangle.z )
-            local holovector = Vector( 0, 50, 0 ):GetNormalized()
-            holovector:Rotate( longangle )
-            local shortvector = ( linetable[secondpriority][1] - startpos ):GetNormalized()
-            local shortangle = shortvector:AngleEx( longvector )
-            local flip = math.Round( math.abs( longvector.x ) + math.abs( longvector.y ) + longvector.z, 0 )
-            local rotation = Angle( 0, 0, ( shortangle - holovector:AngleEx( holovector ) ).y * flip )
-            finalrotation = longangle + rotation
+        table.sort( linetable, function( a, b )
+            return a[2] > b[2]
+        end )
 
-            if tool:GetClientNumber( "debug" ) == 1 then
-                render.DrawLine( endpos, startpos, Color( 255, 0, 0 ) )
-                render.DrawLine( startpos, xline, Color( 255, 0, 0 ) )
-                render.DrawLine( startpos, yline, Color( 0, 255, 0 ) )
-                render.DrawLine( startpos, zline, Color( 255, 255, 0 ) )
-                render.DrawSphere( xline, 1, 10, 10, Color( 255, 0, 0 ) )
-                render.DrawSphere( yline, 1, 10, 10, Color( 0, 255, 0 ) )
-                render.DrawSphere( zline, 1, 10, 10, Color( 255, 255, 0 ) )
-                render.DrawSphere( holovector * 20 + startpos, 1.5, 10, 10, Color( 255, 0, 255 ) )
-            end
+        local firstpriority = currentproptype[1]
+        local secondpriority = currentproptype[2]
+        local longvector = ( linetable[firstpriority][1] - startpos ):GetNormalized()
+        local longangle = longvector:Angle()
+        longangle = Angle( longangle.x, longangle.y, longangle.z )
+        local holovector = Vector( 0, 50, 0 ):GetNormalized()
+        holovector:Rotate( longangle )
+        local shortvector = ( linetable[secondpriority][1] - startpos ):GetNormalized()
+        local shortangle = shortvector:AngleEx( longvector )
+        local flip = math.Round( math.abs( longvector.x ) + math.abs( longvector.y ) + longvector.z, 0 )
+        local rotation = Angle( 0, 0, ( shortangle - holovector:AngleEx( holovector ) ).y * flip )
+        finalrotation = longangle + rotation
 
-            local displacepointer = Vector( 0, 0, 1 )
-            displacepointer:Rotate( finalrotation )
-            local thirdline = ( linetable[3][1] - startpos ):GetNormalized() * -1
-            local displacestr = string.gsub( tostring( displacepointer ), "-0", "0" )
-            local thirdlinestr = string.gsub( tostring( thirdline ), "-0", "0" )
+        if tool:GetClientNumber( "debug" ) == 1 then
+            render.DrawLine( endpos, startpos, Color( 255, 0, 0 ) )
+            render.DrawLine( startpos, xline, Color( 255, 0, 0 ) )
+            render.DrawLine( startpos, yline, Color( 0, 255, 0 ) )
+            render.DrawLine( startpos, zline, Color( 255, 255, 0 ) )
+            render.DrawSphere( xline, 1, 10, 10, Color( 255, 0, 0 ) )
+            render.DrawSphere( yline, 1, 10, 10, Color( 0, 255, 0 ) )
+            render.DrawSphere( zline, 1, 10, 10, Color( 255, 255, 0 ) )
+            render.DrawSphere( holovector * 20 + startpos, 1.5, 10, 10, Color( 255, 0, 255 ) )
+        end
 
-            if displacestr == thirdlinestr then
-                invert = true
-            else
-                invert = false
-            end
+        local displacepointer = Vector( 0, 0, 1 )
+        displacepointer:Rotate( finalrotation )
+        local thirdline = ( linetable[3][1] - startpos ):GetNormalized() * -1
+        local displacestr = string.gsub( tostring( displacepointer ), "-0", "0" )
+        local thirdlinestr = string.gsub( tostring( thirdline ), "-0", "0" )
 
-            local currentmin = Vector( 0, 0, 0 )
-
-            if lastpos:Distance( endpos ) >= 1 then
-                lastpos = endpos
-                local cursordistance = 215225
-                local lastmodel = finalmodel
-                local truemax = Vector( 0, 0, 0 )
-
-                for _, v in ipairs( currentproptype[3] ) do
-                    local inversion = Vector( 0, 0, 0 )
-                    displacementfix = Vector( 0, 0, 0 )
-
-                    if invert then
-                        inversion = Vector( ( linetable[3][1] - startpos ):GetNormalized() * ( v[2].z - v[1].z ) )
-                        displacementfix = Vector( 0, 0, currentproptype[4] )
-                        displacementfix:Rotate( finalrotation )
-                    end
-
-                    local max = Vector( v[2].x, v[2].y, v[2].z )
-                    max:Rotate( finalrotation )
-                    local tempcornerfix = Vector( v[4].x, v[4].y, v[4].z )
-                    tempcornerfix:Rotate( finalrotation )
-                    local currentmax = max + startpos - tempcornerfix + inversion * 2
-
-                    if endpos:Distance( currentmax ) < cursordistance then
-                        cursordistance = endpos:Distance( currentmax )
-                        finalmodel = v[3]
-                        cornerfix = Vector( v[4].x, v[4].y, v[4].z )
-                        cornerfix:Rotate( finalrotation )
-                        finalinversion = inversion
-                        truemax = currentmax
-                        currentmin = Vector( v[4].x, v[4].y, v[4].z )
-                    end
-                end
-
-                local color = Color( tool:GetClientInfo( "red" ), tool:GetClientInfo( "green" ), tool:GetClientInfo( "blue" ), 200 )
-                local materialVar = tool:GetClientInfo( "material" )
-
-                if IsValid( ghostprop ) then
-                    ghostprop:SetModel( finalmodel )
-                    ghostprop:SetRenderMode( RENDERMODE_GLOW )
-                    ghostprop:SetAngles( finalrotation )
-                    ghostprop:SetMaterial( materialVar )
-                    ghostprop:SetColor( color )
-                    local preangle = targetprop:GetAngles()
-                    targetprop:SetAngles( Angle( 0, 0, 0 ) )
-                    ghostprop:SetPos( targetprop:GetPos() - cornerfix + finalinversion + displacementfix )
-                    ghostprop:SetParent( targetprop )
-                    targetprop:SetAngles( preangle )
-                    ghostprop:SetParent( nil )
-                    ghostprop:SetPos( ghostprop:GetPos() + startpos - targetprop:GetPos() )
-                    local fixes = cornerfix + finalinversion + displacementfix
-                    fixes:Rotate( ghostprop:GetAngles() )
-                    currentmin:Rotate( ghostprop:GetAngles() )
-                    finalrotationdynamic = Angle( ghostprop:GetAngles().x, ghostprop:GetAngles().y, ghostprop:GetAngles().z )
-                    finalpos = ghostprop:GetPos()
-
-                    if lastmodel ~= finalmodel or not lastmax:IsEqualTol( truemax, 5 ) and lastmodel == finalmodel then
-                        lastmax = truemax
-                        LocalPlayer():EmitSound( "buttons/lightswitch2.wav", 75, 100, .2 )
-                        local gpcenter = ghostprop:LocalToWorld( ghostprop:OBBCenter() )
-                        local toolend = gpcenter + gpcenter - startpos
-                        LocalPlayer().tilebuild_lastmax = toolend
-                    end
-                else
-                    active = false
-                end
-            end
-
-            if tool:GetClientNumber( "debug" ) == 1 then
-                render.DrawLine( endpos, displacepointer * 10 + endpos, Color( 255, 0, 255 ) )
-                render.DrawWireframeSphere( lastmax, 3, 4, 4, Color( 255, 0, 0 ) )
-
-                for _, v in pairs( currentproptype[3] ) do
-                    local cornershit = Vector( v[1].x, v[1].y, v[1].z )
-                    cornershit:Rotate( finalrotation )
-                    local color = Color( 255, 255, 255 )
-                    local spherepos1 = Vector( v[1].x, v[1].y, v[1].z )
-                    spherepos1:Rotate( finalrotation )
-                    local spherepos2 = Vector( v[2].x, v[2].y, v[2].z )
-                    spherepos2:Rotate( finalrotation )
-                    local spherepos3 = Vector( 0, 25, 0 )
-                    spherepos3:Rotate( finalrotation )
-                    local inversion = Vector( 0, 0, 0 )
-
-                    if invert then
-                        inversion = Vector( ( linetable[3][1] - startpos ):GetNormalized() * ( v[2].z - v[1].z ) )
-                    end
-
-                    if v[3] == finalmodel then
-                        color = Color( 255, 255, 0 )
-                    end
-
-                    render.DrawWireframeBox( startpos - cornershit + inversion, finalrotation, v[1], v[2], color, false )
-                    render.DrawWireframeSphere( spherepos1 + startpos - cornershit, 2, 4, 4, color )
-                    render.DrawWireframeSphere( spherepos2 + startpos - cornershit + inversion * 2, 2, 4, 4, color )
-                    render.DrawWireframeSphere( spherepos1 + startpos - cornershit + spherepos3 + inversion, 2, 4, 4, color )
-                end
-            end
+        if displacestr == thirdlinestr then
+            invert = true
         else
-            if IsValid( ghostprop ) then
-                ghostprop:SetNoDraw( true )
+            invert = false
+        end
+
+        local currentmin = Vector( 0, 0, 0 )
+
+        if lastpos:Distance( endpos ) >= 1 then
+            lastpos = endpos
+            local cursordistance = 215225
+            local lastmodel = finalmodel
+            local truemax = Vector( 0, 0, 0 )
+
+            for _, v in ipairs( currentproptype[3] ) do
+                local inversion = Vector( 0, 0, 0 )
+                displacementfix = Vector( 0, 0, 0 )
+
+                if invert then
+                    inversion = Vector( ( linetable[3][1] - startpos ):GetNormalized() * ( v[2].z - v[1].z ) )
+                    displacementfix = Vector( 0, 0, currentproptype[4] )
+                    displacementfix:Rotate( finalrotation )
+                end
+
+                local max = Vector( v[2].x, v[2].y, v[2].z )
+                max:Rotate( finalrotation )
+                local tempcornerfix = Vector( v[4].x, v[4].y, v[4].z )
+                tempcornerfix:Rotate( finalrotation )
+                local currentmax = max + startpos - tempcornerfix + inversion * 2
+
+                if endpos:Distance( currentmax ) < cursordistance then
+                    cursordistance = endpos:Distance( currentmax )
+                    finalmodel = v[3]
+                    cornerfix = Vector( v[4].x, v[4].y, v[4].z )
+                    cornerfix:Rotate( finalrotation )
+                    finalinversion = inversion
+                    truemax = currentmax
+                    currentmin = Vector( v[4].x, v[4].y, v[4].z )
+                end
             end
+
+            local color = Color( tool:GetClientInfo( "red" ), tool:GetClientInfo( "green" ), tool:GetClientInfo( "blue" ), 200 )
+            local materialVar = tool:GetClientInfo( "material" )
+
+            if IsValid( ghostprop ) then
+                ghostprop:SetModel( finalmodel )
+                ghostprop:SetRenderMode( RENDERMODE_GLOW )
+                ghostprop:SetAngles( finalrotation )
+                ghostprop:SetMaterial( materialVar )
+                ghostprop:SetColor( color )
+                local preangle = targetprop:GetAngles()
+                targetprop:SetAngles( Angle( 0, 0, 0 ) )
+                ghostprop:SetPos( targetprop:GetPos() - cornerfix + finalinversion + displacementfix )
+                ghostprop:SetParent( targetprop )
+                targetprop:SetAngles( preangle )
+                ghostprop:SetParent( nil )
+                ghostprop:SetPos( ghostprop:GetPos() + startpos - targetprop:GetPos() )
+                local fixes = cornerfix + finalinversion + displacementfix
+                fixes:Rotate( ghostprop:GetAngles() )
+                currentmin:Rotate( ghostprop:GetAngles() )
+                finalrotationdynamic = Angle( ghostprop:GetAngles().x, ghostprop:GetAngles().y, ghostprop:GetAngles().z )
+                finalpos = ghostprop:GetPos()
+
+                if lastmodel ~= finalmodel or not lastmax:IsEqualTol( truemax, 5 ) and lastmodel == finalmodel then
+                    lastmax = truemax
+                    LocalPlayer():EmitSound( "buttons/lightswitch2.wav", 75, 100, .2 )
+                    local gpcenter = ghostprop:LocalToWorld( ghostprop:OBBCenter() )
+                    local toolend = gpcenter + gpcenter - startpos
+                    LocalPlayer().tilebuild_lastmax = toolend
+                end
+            else
+                active = false
+            end
+        end
+
+        if tool:GetClientNumber( "debug" ) == 1 then
+            render.DrawLine( endpos, displacepointer * 10 + endpos, Color( 255, 0, 255 ) )
+            render.DrawWireframeSphere( lastmax, 3, 4, 4, Color( 255, 0, 0 ) )
+
+            for _, v in pairs( currentproptype[3] ) do
+                local cornershit = Vector( v[1].x, v[1].y, v[1].z )
+                cornershit:Rotate( finalrotation )
+                local color = Color( 255, 255, 255 )
+                local spherepos1 = Vector( v[1].x, v[1].y, v[1].z )
+                spherepos1:Rotate( finalrotation )
+                local spherepos2 = Vector( v[2].x, v[2].y, v[2].z )
+                spherepos2:Rotate( finalrotation )
+                local spherepos3 = Vector( 0, 25, 0 )
+                spherepos3:Rotate( finalrotation )
+                local inversion = Vector( 0, 0, 0 )
+
+                if invert then
+                    inversion = Vector( ( linetable[3][1] - startpos ):GetNormalized() * ( v[2].z - v[1].z ) )
+                end
+
+                if v[3] == finalmodel then
+                    color = Color( 255, 255, 0 )
+                end
+
+                render.DrawWireframeBox( startpos - cornershit + inversion, finalrotation, v[1], v[2], color, false )
+                render.DrawWireframeSphere( spherepos1 + startpos - cornershit, 2, 4, 4, color )
+                render.DrawWireframeSphere( spherepos2 + startpos - cornershit + inversion * 2, 2, 4, 4, color )
+                render.DrawWireframeSphere( spherepos1 + startpos - cornershit + spherepos3 + inversion, 2, 4, 4, color )
+            end
+        end
+    else
+        if IsValid( ghostprop ) then
+            ghostprop:SetNoDraw( true )
         end
     end
 end )
