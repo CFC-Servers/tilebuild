@@ -578,8 +578,15 @@ function TOOL:Think()
     if not SERVER then return end
 
     if ply:GetVar( "tilebuildtargetprop" ) ~= traceent:EntIndex() then
-        local aabbmin, aabbmax = ply:GetEyeTrace().Entity:GetPhysicsObject():GetAABB()
+        local aimEnt = ply:GetEyeTrace().Entity
+        if not IsValid( aimEnt ) then return end
+
+        local phys = aimEnt:GetPhysicsObject()
+        if not IsValid( phys ) then return end
+
+        local aabbmin, aabbmax = phys:GetAABB()
         ply:SetVar( "tilebuildtargetprop", traceent:EntIndex() )
+
         net.Start( "tilebuild_sendaabb" )
         net.WriteVector( aabbmin )
         net.WriteVector( aabbmax )
