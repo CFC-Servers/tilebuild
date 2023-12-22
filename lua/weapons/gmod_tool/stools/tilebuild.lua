@@ -728,10 +728,11 @@ local transwhite = Color( 255, 255, 255, 40)
 
 hook.Add("PostDrawTranslucentRenderables", "tilebuildclienteffects", function(bdepth, bskybox)
     local ply = LocalPlayer()
-    if not IsValid(ply:GetActiveWeapon()) or ply:GetActiveWeapon():GetClass() ~= "gmod_tool" then return end
+    local wep = ply:GetActiveWeapon()
+    if not IsValid(wep) or wep:GetClass() ~= "gmod_tool" then return end
 
     local tool = ply:GetTool("tilebuild")
-    if tool == nil or ply:GetActiveWeapon():GetMode() ~= "tilebuild" or ply:GetActiveWeapon():GetClass() ~= "gmod_tool" then return end
+    if tool == nil or wep:GetMode() ~= "tilebuild" or wep:GetClass() ~= "gmod_tool" then return end
 
 
     if not ply:GetNW2Bool("tilebuild_deployed") then return end
@@ -781,7 +782,6 @@ hook.Add("PostDrawTranslucentRenderables", "tilebuildclienteffects", function(bd
 
         end
     else
-
         if ply.tilebuild_dragoffset ~= nil and tool:GetClientNumber("outline") == 1 then
             local min, max = tilebuildprop:GetModelBounds()
             render.DrawWireframeBox(tilebuildprop:GetPos(), tilebuildprop:GetAngles(), min, max, color_white)
