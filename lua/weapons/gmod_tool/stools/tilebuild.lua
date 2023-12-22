@@ -27,8 +27,6 @@ if SERVER then
     CreateConVar("tilebuild_searchspeed", "4", FCVAR_ARCHIVE, "how many ticks to wait between searching the prop table, may reduce lag if encountered", 1, 100 )
 end
 
-CreateConVar("tilebuild_sprops", "0", FCVAR_ARCHIVE, "enable or disable sprops showing in the tilebuild menu, requires restart", 0, 1 )
-
 if CLIENT then
 
     TOOL.Information = {
@@ -875,7 +873,7 @@ local proptypes = {
 
 
 function TOOL.BuildCPanel( DForm )
-    if GetConVar("tilebuild_sprops"):GetFloat() == 1 then
+    if file.Exists( "autorun/sprops.lua", "lcl" ) then
         proptypes = {
             ["models/squad/sf_plates/sf_plate4x4.mdl"] = {["tilebuild_proptype"] = "superflat"},
             ["models/props_phx/construct/metal_plate1.mdl"] = {["tilebuild_proptype"] = "steel"},
