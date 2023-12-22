@@ -24,9 +24,7 @@ TOOL.ClientConVar["outline"] = "1"
 if SERVER then
 
     util.AddNetworkString("tilebuild_snapnoise")
-    util.AddNetworkString("tilebuild_rightclick")
     CreateConVar("tilebuild_searchspeed", "4", FCVAR_ARCHIVE, "how many ticks to wait between searching the prop table, may reduce lag if encountered", 1, 100 )
-
 end
 
 CreateConVar("tilebuild_sprops", "0", FCVAR_ARCHIVE, "enable or disable sprops showing in the tilebuild menu, requires restart", 0, 1 )
@@ -332,22 +330,6 @@ function TOOL:LeftClick(tr)
 end
 
 function TOOL:RightClick()
-
-    --[[if CLIENT then
-
-        net.Start("tilebuild_rightclick")
-        net.SendToServer()
-
-    else
-
-        if game.SinglePlayer() then
-
-            serverrightclick(Entity(1))
-
-        end
-
-    end]]
-
 end
 
 function tbsnaptogrid(ent, ply)
@@ -555,8 +537,6 @@ function TOOL:Think()
     end
 
     --start of Dynamic Point Snapping
-
-
     targetprop = ply.tilebuild_targetprop
 
     local snapamount = (currentproptype[5] / self:GetClientNumber("snapdivision"))
@@ -629,22 +609,14 @@ function TOOL:Think()
     end
 
     ply:SetNW2Vector("tilebuild_dynamicsnappos", ply.tilebuild_dynamicsnappos)
-
     --end of Dynamic Point Snapping
 
 
     if ply.tilebuild_active then
 
-
-        --start of endpos stuff
-
         local endpos = (ply:GetAimVector() * ply.tilebuild_dist + ply:EyePos())
             endpos = endpos + (targetprop:GetPos() - startpos)
             endpos = targetprop:WorldToLocal(endpos) + startpos
-
-
-        --end of endpos stuff
-
 
         --start of Prop Angling
 
@@ -706,13 +678,7 @@ function TOOL:Think()
         local displacepointer = Vector(0, 0, 1)
         displacepointer:Rotate(finalrotation)
 
-        local spherepos = Vector(0,0,0)
-
         local thirdline = (linetable[3][1] - startpos):GetNormalized() * -1
-
-        --local displacestr = string.gsub(tostring(displacepointer), "-0", "0")
-        --local thirdlinestr = string.gsub(tostring(thirdline), "-0", "0")
-
         local invert = thirdline:IsEqualTol(displacepointer, .01)
 
         if thirdline:IsEqualTol(displacepointer, .01) then
@@ -729,8 +695,6 @@ function TOOL:Think()
         local cornerfix = Vector(0,0,0)
         local anglefix = Angle(0,0,0)
         local proptable = currentproptype[3]
-        local bubbleinc = currentproptype[1]
-        local snapnoise = Vector(0,0,0)
 
         if ply.tilebuild_lastpos:Distance(endpos) > 3 and ((engine.TickCount() % GetConVar("tilebuild_searchspeed"):GetFloat()) == 0) then
 
@@ -891,118 +855,93 @@ local novec = Vector(0,0,0)
 local transwhite = Color( 255, 255, 255, 40)
 
 hook.Add("PostDrawTranslucentRenderables", "tilebuildclienteffects", function(bdepth, bskybox)
-
     local ply = LocalPlayer()
-
-    local tool = LocalPlayer():GetTool("tilebuild")
-
     if not IsValid(ply:GetActiveWeapon()) or ply:GetActiveWeapon():GetClass() ~= "gmod_tool" then return end
 
+    local tool = ply:GetTool("tilebuild")
     if tool == nil or ply:GetActiveWeapon():GetMode() ~= "tilebuild" or ply:GetActiveWeapon():GetClass() ~= "gmod_tool" then return end
 
-    --render.DrawSphere(ply:GetNW2Vector("debugmax-"), 1, 10, 10, Color( 255, 0,0 ))
-    --render.DrawSphere(ply:GetNW2Vector("debugmax-2"), 1, 10, 10, Color( 0, 0,255 ))
 
     if not ply:GetNW2Bool("tilebuild_deployed") then return end
 
-    --if tool:GetClientNumber("guide") == 1 then
+    local tr = LocalPlayer():GetEyeTrace()
+    render.SetMaterial(constructmat)
 
-        local tr = LocalPlayer():GetEyeTrace()
+    local snapamount = ply:GetNW2Float("tilebuild_snapamount")
+    local clendpos = (ply:GetAimVector() * ply:GetNW2Float("tilebuild_dist") + ply:EyePos())
+    local targetprop = Entity(ply:GetNW2Int("tilebuild_targetprop"))
+    local tilebuildprop = Entity(ply:GetNW2Int("tilebuild_prop"))
+    local startpos = ply.tilebuild_clstartpos or novec
 
-        render.SetMaterial(constructmat)
+    if not IsValid(targetprop) and not targetprop:IsWorld() then return end
 
-        local snapamount = ply:GetNW2Float("tilebuild_snapamount")
+    local trueendpos = clendpos + (targetprop:GetPos() - startpos)
+    trueendpos = targetprop:WorldToLocal(trueendpos) + startpos
 
-        local clendpos = (ply:GetAimVector() * ply:GetNW2Float("tilebuild_dist") + ply:EyePos())
+    local active = ply:GetNW2Bool("tilebuild_active")
+    local div = tool:GetClientNumber("snapdivision")
 
-        local targetprop = Entity(ply:GetNW2Int("tilebuild_targetprop"))
+    if active then
+        if (ply.tilebuild_hitent:GetClass() ~= "prop_physics") then ply.tilebuild_clstartpos = ply:GetNW2Vector("tilebuild_startpos") end
 
-        local tilebuildprop = Entity(ply:GetNW2Int("tilebuild_prop"))
-
-        local startpos = ply.tilebuild_clstartpos or novec
-
-        if not IsValid(targetprop) and not targetprop:IsWorld() then return end
-
-        local trueendpos = clendpos + (targetprop:GetPos() - startpos)
-            trueendpos = targetprop:WorldToLocal(trueendpos) + startpos
-
-        local active = ply:GetNW2Bool("tilebuild_active")
-
-        local div = tool:GetClientNumber("snapdivision")
-
-
-        if active then
-
-            if (ply.tilebuild_hitent:GetClass() ~= "prop_physics") then ply.tilebuild_clstartpos = ply:GetNW2Vector("tilebuild_startpos") end
-
-            if tool:GetClientNumber("dynamicsnap") == 0 then
-                ply.tilebuild_clstartpos = Vector(
-                    math.SnapTo(ply.tilebuild_clstartpos.x, snapamount / div),
-                    math.SnapTo(ply.tilebuild_clstartpos.y, snapamount / div),
-                    math.SnapTo(ply.tilebuild_clstartpos.z, snapamount / div)
-                )
-            end
-
-            if tool:GetClientNumber("previewbox") == 1 then
-
-                render.DrawWireframeBox(ply.tilebuild_clstartpos, targetprop:GetAngles(), novec, trueendpos - ply.tilebuild_clstartpos, color_white)
-
-            end
-
-            if tool:GetClientNumber("guide") == 1 then
-
-                render.DrawSphere(clendpos, 1, 10, 10, transwhite)
-                render.DrawLine(ply.tilebuild_clstartpos, clendpos, transwhite)
-
-            end
-
-
-            if IsValid(tilebuildprop) and tool:GetClientNumber("outline") == 1 then
-
-                local min, max = tilebuildprop:GetCollisionBounds()
-                render.DrawWireframeBox(tilebuildprop:GetPos(), tilebuildprop:GetAngles(), min, max, color_white)
-
-            end
-
-
-        else
-
-            if ply.tilebuild_dragoffset ~= nil and tool:GetClientNumber("outline") == 1 then
-                local min, max = tilebuildprop:GetModelBounds()
-                render.DrawWireframeBox(tilebuildprop:GetPos(), tilebuildprop:GetAngles(), min, max, color_white)
-            end
-
-            ply.tilebuild_hitent = tr.Entity
-
-            local spherepos = tr.HitPos
-
-            if tr.Entity ~= game.GetWorld() then
-
-                spherepos = ply:GetNW2Vector("tilebuild_dynamicsnappos")
-
-            end
-
-            if tool:GetClientNumber("dynamicsnap") == 0 then
-
-                spherepos = Vector(math.SnapTo(spherepos.x, snapamount / div), math.SnapTo(spherepos.y, snapamount / div), math.SnapTo(spherepos.z, snapamount / div))
-
-            end
-
-            ply.tilebuild_clstartpos = spherepos
-
+        if tool:GetClientNumber("dynamicsnap") == 0 then
+            ply.tilebuild_clstartpos = Vector(
+                math.SnapTo(ply.tilebuild_clstartpos.x, snapamount / div),
+                math.SnapTo(ply.tilebuild_clstartpos.y, snapamount / div),
+                math.SnapTo(ply.tilebuild_clstartpos.z, snapamount / div)
+            )
         end
 
+        if tool:GetClientNumber("previewbox") == 1 then
+
+            render.DrawWireframeBox(ply.tilebuild_clstartpos, targetprop:GetAngles(), novec, trueendpos - ply.tilebuild_clstartpos, color_white)
+
+        end
 
         if tool:GetClientNumber("guide") == 1 then
 
-            render.DrawSphere(ply.tilebuild_clstartpos, 1, 10, 10, novec)
+            render.DrawSphere(clendpos, 1, 10, 10, transwhite)
+            render.DrawLine(ply.tilebuild_clstartpos, clendpos, transwhite)
 
         end
 
-    --end
+
+        if IsValid(tilebuildprop) and tool:GetClientNumber("outline") == 1 then
+
+            local min, max = tilebuildprop:GetCollisionBounds()
+            render.DrawWireframeBox(tilebuildprop:GetPos(), tilebuildprop:GetAngles(), min, max, color_white)
+
+        end
+    else
+
+        if ply.tilebuild_dragoffset ~= nil and tool:GetClientNumber("outline") == 1 then
+            local min, max = tilebuildprop:GetModelBounds()
+            render.DrawWireframeBox(tilebuildprop:GetPos(), tilebuildprop:GetAngles(), min, max, color_white)
+        end
+
+        ply.tilebuild_hitent = tr.Entity
+
+        local spherepos = tr.HitPos
+
+        if tr.Entity ~= game.GetWorld() then
+
+            spherepos = ply:GetNW2Vector("tilebuild_dynamicsnappos")
+
+        end
+
+        if tool:GetClientNumber("dynamicsnap") == 0 then
+
+            spherepos = Vector(math.SnapTo(spherepos.x, snapamount / div), math.SnapTo(spherepos.y, snapamount / div), math.SnapTo(spherepos.z, snapamount / div))
+
+        end
+
+        ply.tilebuild_clstartpos = spherepos
+    end
 
 
-
+    if tool:GetClientNumber("guide") == 1 then
+        render.DrawSphere(ply.tilebuild_clstartpos, 1, 10, 10, novec)
+    end
 end)
 
 list.Add( "tilebuildmaterials", "No_Material" )
