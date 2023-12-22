@@ -150,28 +150,24 @@ local sharedsnap = 11.859375
 
 local platetable = {
 
-	["superflat"] = {1, 2, tilebuild_superflat, 0, 12},
-	["steel"] = {1, 2, tilebuild_steel, 0, sharedsnap},
-	["plastic"] = {1, 2, tilebuild_plastic, 0, sharedsnap},
-	["steelframe"] = {1, 2, tilebuild_steelframe, 0, sharedsnap},
-	["wood"] = {1, 2, tilebuild_wood, 0, sharedsnap},
-	["woodframe"] = {1, 2, tilebuild_woodframe, 0, sharedsnap},
-	["glass"] = {1, 2, tilebuild_glass, 0, sharedsnap},
-	["strongglass"] = {1, 2, tilebuild_strongglass, 0, sharedsnap},
-	["sprops"] = {1, 2, tilebuild_sprops, 1, 6},
-	["floatyplastic"] = {1, 2, tilebuild_floatyplastic, 0, sharedsnap},
-	["spropsp1"] = {1, 2, tilebuild_spropsp1, 0, 6},
-	["spropsp2"] = {1, 2, tilebuild_spropsp2, 0, 6}
+	["superflat"] = {1, 2, TILEBUILD.tilebuild_superflat, 0, 12},
+	["steel"] = {1, 2, TILEBUILD.tilebuild_steel, 0, sharedsnap},
+	["plastic"] = {1, 2, TILEBUILD.tilebuild_plastic, 0, sharedsnap},
+	["steelframe"] = {1, 2, TILEBUILD.tilebuild_steelframe, 0, sharedsnap},
+	["wood"] = {1, 2, TILEBUILD.tilebuild_wood, 0, sharedsnap},
+	["woodframe"] = {1, 2, TILEBUILD.tilebuild_woodframe, 0, sharedsnap},
+	["glass"] = {1, 2, TILEBUILD.tilebuild_glass, 0, sharedsnap},
+	["strongglass"] = {1, 2, TILEBUILD.tilebuild_strongglass, 0, sharedsnap},
+	["sprops"] = {1, 2, TILEBUILD.tilebuild_sprops, 1, 6},
+	["floatyplastic"] = {1, 2, TILEBUILD.tilebuild_floatyplastic, 0, sharedsnap},
+	["spropsp1"] = {1, 2, TILEBUILD.tilebuild_spropsp1, 0, 6},
+	["spropsp2"] = {1, 2, TILEBUILD.tilebuild_spropsp2, 0, 6}
 
 }
-local sharedsnap = 11.8125
 
 local constructmat = Material("gm_construct/color_room")
 
-Entity(1).tilebuild_active = false
-
 function TOOL:Reload()
-
 	local ply = self:GetOwner()
 
 	if not ply.tilebuild_active or CLIENT then return end
@@ -182,7 +178,6 @@ function TOOL:Reload()
 	if IsValid(ply.tilebuild_prop) then ply.tilebuild_prop:Remove() end
 
 	self:SetStage(0)
-
 end
 
 local function findclosestcorner(ent, pos)
@@ -253,7 +248,6 @@ local function tbmakeprop(ply, model, color, pos, angle, mat)
  		undo.AddEntity(ply.tilebuild_prop)
  		undo.SetPlayer(ply)
  	undo.Finish()
-
  end
 
 

@@ -1,4 +1,5 @@
-tilebuild_floatyplastic	=	{
+TILEBUILD = {}
+TILEBUILD.tilebuild_floatyplastic	= {
 		[0]	=	{
 				{
 					"models/props_phx/construct/plastic/plastic_panel1x1.mdl",
@@ -81,7 +82,7 @@ tilebuild_floatyplastic	=	{
 				},
 }
 
-tilebuild_woodframe	=	{
+TILEBUILD.tilebuild_woodframe	= {
 		[0]	=	{
 				{
 					"models/props_phx/construct/wood/wood_wire1x1.mdl",
@@ -128,7 +129,7 @@ tilebuild_woodframe	=	{
 				},
 }
 
-tilebuild_wood	=	{
+TILEBUILD.tilebuild_wood = {
 		[0]	=	{
 				{
 					"models/props_phx/construct/wood/wood_boardx1.mdl",
@@ -181,7 +182,7 @@ tilebuild_wood	=	{
 				},
 }
 
-tilebuild_strongglass	=	{
+TILEBUILD.tilebuild_strongglass = {
 		[0]	=	{
 				{
 					"models/props_phx/construct/windows/window1x1.mdl",
@@ -216,7 +217,7 @@ tilebuild_strongglass	=	{
 				},
 }
 
-tilebuild_glass	=	{
+TILEBUILD.tilebuild_glass	= {
 		[0]	=	{
 				{
 					"models/props_phx/construct/glass/glass_plate1x1.mdl",
@@ -251,7 +252,7 @@ tilebuild_glass	=	{
 				},
 }
 
-tilebuild_steel	=	{
+TILEBUILD.tilebuild_steel	= {
 		[0]	=	{
 				{
 					"models/props_phx/construct/metal_plate1.mdl",
@@ -286,7 +287,7 @@ tilebuild_steel	=	{
 				},
 }
 
-tilebuild_steelframe	=	{
+TILEBUILD.tilebuild_steelframe = {
 		[0]	=	{
 				{
 					"models/props_phx/construct/metal_wire1x1.mdl",
@@ -333,7 +334,7 @@ tilebuild_steelframe	=	{
 				},
 }
 
-tilebuild_plastic	=	{
+TILEBUILD.tilebuild_plastic = {
 		[0]	=	{
 				{
 					"models/hunter/blocks/cube025x025x025.mdl",
@@ -1841,7 +1842,7 @@ tilebuild_plastic	=	{
 					},
 				},
 }
-tilebuild_superflat	=	{
+TILEBUILD.tilebuild_superflat	= {
 		[0]	=	{
 				{
 					"models/squad/sf_bars/sf_bar1.mdl",
@@ -2166,7 +2167,7 @@ tilebuild_superflat	=	{
 				},
 }
 
-tilebuild_sprops	=	{
+TILEBUILD.tilebuild_sprops = {
 		[0]	=	{
 				{
 					"models/sprops/cuboids/height06/size_1/cube_6x6x6.mdl",
@@ -7023,7 +7024,7 @@ tilebuild_sprops	=	{
 				},
 }
 
-tilebuild_spropsp1	=	{
+TILEBUILD.tilebuild_spropsp1 = {
 		[0]	=	{
 				{
 					"models/sprops/rectangles_thin/size_0/rect_1_5x6x1_5.mdl",
@@ -9258,7 +9259,7 @@ tilebuild_spropsp1	=	{
 				},
 }
 
-tilebuild_spropsp2	=	{
+TILEBUILD.tilebuild_spropsp2 = {
 		[0]	=	{
 				{
 					"models/sprops/rectangles_superthin/size_0/rect_1_5x6.mdl",
