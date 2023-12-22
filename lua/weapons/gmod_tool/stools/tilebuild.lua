@@ -179,11 +179,8 @@ function TOOL:Reload()
 end
 
 local function findclosestcorner(ent, pos)
-
     local min, max = ent:GetPhysicsObject():GetAABB()
-
     local localhitpos = ent:WorldToLocal(pos)
-
     local corners = {
         Vector(min),
         Vector(min.x, min.y, max.z),
@@ -199,15 +196,11 @@ local function findclosestcorner(ent, pos)
     local closestcorner = Vector(0,0,0)
 
     for k, v in ipairs(corners) do
-
         if v:Distance(localhitpos) < dist then
-
             dist = v:Distance(localhitpos)
 
             closestcorner = v
-
         end
-
     end
 
     closestcorner:Rotate(ent:GetAngles())
@@ -262,14 +255,11 @@ function TOOL:LeftClick(tr)
         self:SetStage(1)
 
         local color = Color(self:GetClientInfo("red"), self:GetClientInfo("green"), self:GetClientInfo("blue"), self:GetClientInfo("alpha"))
-
         local hitpos = ply:GetEyeTrace().HitPos
-
         local snapamount = ply.tilebuild_currentproptype[5]
         ply:SetNW2Float("tilebuild_snapamount", snapamount)
 
         local div = self:GetClientNumber("snapdivision")
-
         ply.tilebuild_startpos = Vector(math.SnapTo(hitpos.x, snapamount / div), math.SnapTo(hitpos.y, snapamount / div), math.SnapTo(hitpos.z, snapamount / div))
         tr.HitPos = ply.tilebuild_startpos
         ply.tilebuild_dist = hitpos:Distance(ply:EyePos())
@@ -278,32 +268,20 @@ function TOOL:LeftClick(tr)
         ply.tilebuild_lastpos = Vector(math.huge, math.huge, math.huge)
 
         if SERVER then
-
             tbmakeprop(ply, nil, color, ply:GetPos() + Vector(0, 0, 100), Angle(0,0,0))
             ply:SetNW2Int("tilebuild_prop", ply.tilebuild_prop:EntIndex())
-
         end
 
         if self:GetClientNumber("dynamicsnap") == 1 then
-
             if ply:GetEyeTrace().Entity:GetClass() == "prop_physics" then
-
                 ply.tilebuild_startpos = ply.tilebuild_dynamicsnappos
-
             else
-
                 ply.tilebuild_startpos = ply:GetEyeTrace().HitPos
-
             end
-
         end
-
     else
-
         if IsValid(ply.tilebuild_prop) and SERVER then
-
             local fixpos = ply.tilebuild_startpos - findclosestcorner(ply.tilebuild_prop, ply.tilebuild_startpos)
-
             local model = ply.tilebuild_prop:GetModel()
             local pos = ply.tilebuild_prop:GetPos()
             local color = ply.tilebuild_prop:GetColor()
@@ -313,33 +291,26 @@ function TOOL:LeftClick(tr)
             ply.tilebuild_prop:Remove()
 
             tbmakeprop(ply, model, color, pos + fixpos, angle, material)
-
         end
 
         tr.HitPos = ply:GetNW2Vector("tilebuild_raypos")
         self:SetStage(0)
-
     end
 
     ply.tilebuild_active = not ply:GetNW2Bool("tilebuild_active")
     ply:SetNW2Bool("tilebuild_active", ply.tilebuild_active)
 
     return true
-
-
 end
 
 function TOOL:RightClick()
 end
 
-function tbsnaptogrid(ent, ply)
-
+local function tbsnaptogrid(ent, ply)
     if CLIENT then return end
 
     if CPPI_DEFER ~= nil then
-
         if ent:CPPIGetOwner() ~= ply then return end
-
     end
 
     for i = 0, 2 do
@@ -369,31 +340,21 @@ function tbsnaptogrid(ent, ply)
             ent:SetAngles(newangle)
 
             ent:GetPhysicsObject():EnableMotion(false)
-
         end
-
     end
-
 end
 
-local function getdragmove(pos, snapdist, prop, proppos)
-
+local function getdragmove( pos, snapdist, prop, proppos )
     local offset = offset or prop:GetPos()
-
-    local pos = WorldToLocal( pos, game.GetWorld():GetAngles(), proppos, prop:GetAngles())
-
-
+    pos = WorldToLocal( pos, game.GetWorld():GetAngles(), proppos, prop:GetAngles())
     local movecounts = Vector(math.Round(pos.x / snapdist, 0), math.Round(pos.y / snapdist, 0), math.Round(pos.z / snapdist, 0))
-    --local move = prop:LocalToWorld(movecounts) - prop:GetPos()
     local localmove = movecounts
     movecounts:Rotate(prop:GetAngles())
 
     return movecounts, localmove
-
 end
 
-local function getpropdirscale(prop, dir)
-
+local function getpropdirscale( prop )
     local dir = dir:GetNormalized()
     local forward = prop:GetForward()
     local up = prop:GetUp()
@@ -417,19 +378,15 @@ local function getpropdirscale(prop, dir)
 end
 
 local function rightclickdrag(ply, dynamic)
-
     if ply.tilebuild_active or not ply:KeyDown(IN_ATTACK2) and engine.TickCount() % 5 == 0 then ply.tilebuild_dragoffset = nil return end
 
     if CPPI_DEFER ~= nil then
-
         if ent:CPPIGetOwner() ~= ply then return end
-
     end
 
     local tr = ply:GetEyeTrace()
 
     if ply:KeyPressed(IN_ATTACK2) then
-
         if not dynamic then tbsnaptogrid(tr.Entity, ply) end
 
         ply.tilebuild_prop = tr.Entity
@@ -439,7 +396,6 @@ local function rightclickdrag(ply, dynamic)
         ply:SetNW2Int("tilebuild_prop", tr.Entity:EntIndex())
 
         if not tr.Entity.tilebuild_dragstart then tr.Entity.tilebuild_dragstart = tr.Entity:GetPos() end
-
     end
 
     if SERVER and IsValid(ply.tilebuild_prop) then
@@ -448,11 +404,8 @@ local function rightclickdrag(ply, dynamic)
 
         local cursor = (tr.Normal * ply.tilebuild_dist) + ply:EyePos() - ply.tilebuild_dragoffset
         local snapdist = ply.tilebuild_currentproptype[5] or 0
-
         local move, localmove = getdragmove(cursor, snapdist, ply.tilebuild_prop, ply.tilebuild_prop:GetPos())
-
         local totalmove = move * snapdist
-
         local scale = getpropdirscale(ply.tilebuild_prop, move) or snapdist
 
         if (ply.tilebuild_prop:GetPos() - ply.tilebuild_prop.tilebuild_dragstart):Length() > snapdist then
@@ -472,13 +425,10 @@ local function rightclickdrag(ply, dynamic)
         ply.tilebuild_prop:SetPos(ply.tilebuild_prop:GetPos() + totalmove )
 
         ply.tilebuild_prop:GetPhysicsObject():EnableMotion(false)
-
     end
-
 end
 
 local function getclosestkey(tbl, value)
-
     local closest = math.huge
 
     for k, v in pairs(tbl) do
@@ -488,41 +438,31 @@ local function getclosestkey(tbl, value)
     end
 
     return closest
-
 end
+
 local noAABB = Vector(0,0,0), Vector(0,0,0)
 function TOOL:Think()
-
     local ply = self:GetOwner()
-
     ply.tilebuild_tool = self
 
     if not ply:GetEyeTrace().Hit then return end
 
     if not ply:GetNW2Bool("tilebuild_deployed") then
-
         ply:SetNW2Bool("tilebuild_deployed", true)
-
     end
 
     local currentproptype = ply.tilebuild_currentproptype or platetable["plastic"]
 
     local tr = ply:GetEyeTrace()
-
     local hitpos = tr.HitPos
-
     local targetprop = nil
-
     if not ply.tilebuild_active then
 
         ply.tilebuild_targetprop = tr.Entity
 
         if not ply:GetNW2Bool("tilebuild_active") then
-
             ply:SetNW2Int("tilebuild_targetprop", ply.tilebuild_targetprop:EntIndex())
-
         end
-
     end
 
     rightclickdrag(ply, self:GetClientNumber("dynamicsnap") == 1)
@@ -530,21 +470,15 @@ function TOOL:Think()
     if CLIENT then return end
 
     if not IsValid(ply.tilebuild_prop) and ply.tilebuild_active then
-
         ply.tilebuild_active = false
         ply:SetNW2Bool("tilebuild_active", false)
-
     end
 
     --start of Dynamic Point Snapping
     targetprop = ply.tilebuild_targetprop
-
     local snapamount = (currentproptype[5] / self:GetClientNumber("snapdivision"))
-
     local startpos = ply.tilebuild_startpos
-
     local center = targetprop:WorldSpaceCenter()
-
     local diffmin, diffmax = noAABB
 
     if targetprop ~= game.GetWorld() then
@@ -555,18 +489,14 @@ function TOOL:Think()
 
     ply.tilebuild_targetprop = targetprop
 
-    local rawcorner = diffmin
-
     local div = self:GetClientNumber("snapdivision")
 
     if self:GetClientNumber("dynamicsnap") == 1 then
-
         if targetprop == game.GetWorld() or not diffmax then
 
             ply.tilebuild_dynamicsnappos = hitpos
 
         else
-
             snapamount = snapamount or 0
             if hitpos:Distance(ply.tilebuild_dynamicsnappos) > snapamount / 2 then
 
@@ -599,36 +529,25 @@ function TOOL:Think()
                 ply.tilebuild_dynamicsnappos = finaltestgridpos + testcorner
 
             end
-
         end
-
     else
-
         ply.tilebuild_dynamicsnappos = Vector(math.SnapTo(hitpos.x, snapamount / div), math.SnapTo(hitpos.y, snapamount / div), math.SnapTo(hitpos.z, snapamount / div))
-
     end
 
     ply:SetNW2Vector("tilebuild_dynamicsnappos", ply.tilebuild_dynamicsnappos)
     --end of Dynamic Point Snapping
 
-
     if ply.tilebuild_active then
-
         local endpos = (ply:GetAimVector() * ply.tilebuild_dist + ply:EyePos())
             endpos = endpos + (targetprop:GetPos() - startpos)
             endpos = targetprop:WorldToLocal(endpos) + startpos
 
         --start of Prop Angling
 
-        local angle = Angle(0,0,0)
-
         local xline = Vector(endpos.x,startpos.y,startpos.z)
         local yline = Vector(startpos.x,endpos.y,startpos.z)
         local zline = Vector(startpos.x,startpos.y,endpos.z)
-
-
         local hitnormal = ply:GetEyeTrace().HitNormal
-
         local snappednormal = Entity(0):GetForward()
         snappednormal:Rotate(hitnormal:Angle():SnapTo( "p", 90 ):SnapTo( "y", 90 ):SnapTo( "r", 90 ))
         snappednormal = Vector(math.Round(snappednormal.x, 1), math.Round(snappednormal.y, 1), math.Round(snappednormal.z, 1))
@@ -643,31 +562,18 @@ function TOOL:Think()
 
         --this is stupid and ill probably forget to make this less stupid :)
         local firstpriority = 1
-
         local secondpriority = 2
-
         local longvector = (linetable[firstpriority][1] - startpos):GetNormalized()
-
         local longangle = longvector:Angle()
-
         longangle = Angle(longangle.x, longangle.y, longangle.z)
 
-
         local holovector = Vector(0, 50, 0):GetNormalized()
-
         holovector:Rotate(longangle)
 
-
         local shortvector = (linetable[secondpriority][1] - startpos):GetNormalized()
-
         local shortangle = shortvector:AngleEx(longvector)
-
         local flip = math.Round(math.abs(longvector.x) + math.abs(longvector.y) + longvector.z, 0)
-
-
         local rotation = Angle(0, 0, (shortangle - holovector:AngleEx(holovector)).y * flip)
-
-
         local finalrotation = longangle + rotation
 
         --end of Prop Angling
@@ -697,43 +603,28 @@ function TOOL:Think()
         local proptable = currentproptype[3]
 
         if ply.tilebuild_lastpos:Distance(endpos) > 3 and ((engine.TickCount() % GetConVar("tilebuild_searchspeed"):GetFloat()) == 0) then
-
             proptable = proptable[getclosestkey(proptable, math.SnapTo((startpos - endpos):Length(), snapamount))]
 
             ply.tilebuild_lastpos = endpos
-
-
             local cursordistance = math.huge
 
-            local lastmodel = ply.tilebuild_finalmodel
-
-            local test = Vector(0,0,1)
-
-
             for k, v in ipairs(proptable) do
-
                 local inversion = Vector(0,0,0)
 
                 if invert then
-
                     inversion = Vector(((linetable[3][1] - startpos):GetNormalized()) * -(v[2].z - v[3].z))
-
                 end
 
                 local max = Vector(v[3].x, v[3].y, v[3].z)
 
                 if v[4].y ~= 0 and v[4].p == 0 then
-
                     max = Vector(v[3].x, v[3].y + ((v[2].y - v[3].y) * 2), v[3].z)
-
                 end
 
                 if v[4].y == 0 and v[4].p > 0 then
-
                     max = Vector(v[3].x, v[3].y, v[3].z + ((v[2].z - v[3].z) * 2))
 
                     inversion = inversion * -1
-
                 end
 
                 max:Rotate(finalrotation)
@@ -757,10 +648,7 @@ function TOOL:Think()
                     finalinversion = inversion
 
                     mcenter = (currentmax + startpos) / 2
-
-
                 end
-
             end
 
             --end
@@ -802,54 +690,38 @@ function TOOL:Think()
             physobj:EnableMotion(false)
 
             if ply.tilebuild_prop:WorldSpaceCenter():Distance(preproppos) > 1 then
-
                 net.Start("tilebuild_snapnoise")
                 net.Send(ply)
-
             end
-
         end
-
         --end of prop search
-
-
     end
-
-
 end
 
 net.Receive("tilebuild_snapnoise", function()
-
-    LocalPlayer():EmitSound("buttons/lightswitch2.wav", 75, 100, .2)
-
+    surface.PlaySound("buttons/lightswitch2.wav")
 end)
 
 function TOOL:Deploy()
-
     self:GetOwner():SetNW2Bool("tilebuild_deployed", true)
-
 end
 
 function TOOL:Holster()
-
     if IsValid(self:GetOwner().tilebuild_prop) and self:GetOwner():GetNW2Bool("tilebuild_active") and SERVER then
         self:GetOwner().tilebuild_prop:Remove()
     end
 
     self:GetOwner():SetNW2Bool("tilebuild_deployed", false)
-
 end
 
 
-hook.Add("PlayerDroppedWeapon", "tilebuild_dropped", function(ply, wep)
-
+hook.Add( "PlayerDroppedWeapon", "tilebuild_dropped", function( ply, wep )
     if wep:GetClass() ~= "gmod_tool" then return end
-
     if wep:GetMode() ~= "tilebuild" then return end
 
-    ply:SetNW2Bool("tilebuild_deployed", false)
+    ply:SetNW2Bool( "tilebuild_deployed", false )
 
-end)
+end )
 
 local novec = Vector(0,0,0)
 local transwhite = Color( 255, 255, 255, 40)
@@ -893,16 +765,12 @@ hook.Add("PostDrawTranslucentRenderables", "tilebuildclienteffects", function(bd
         end
 
         if tool:GetClientNumber("previewbox") == 1 then
-
             render.DrawWireframeBox(ply.tilebuild_clstartpos, targetprop:GetAngles(), novec, trueendpos - ply.tilebuild_clstartpos, color_white)
-
         end
 
         if tool:GetClientNumber("guide") == 1 then
-
             render.DrawSphere(clendpos, 1, 10, 10, transwhite)
             render.DrawLine(ply.tilebuild_clstartpos, clendpos, transwhite)
-
         end
 
 
@@ -993,7 +861,6 @@ list.Set( "tilebuildproptypes", "models/props_phx/construct/metal_plate1.mdl")
 list.Set( "tilebuildproptypes", "models/maxofs2d/lamp_projector.mdl")
 
 local proptypes = {
-
     ["models/squad/sf_plates/sf_plate4x4.mdl"] = {["tilebuild_proptype"] = "superflat"},
     ["models/props_phx/construct/metal_plate1.mdl"] = {["tilebuild_proptype"] = "steel"},
     ["models/props_phx/construct/metal_wire1x1.mdl"] = {["tilebuild_proptype"] = "steelframe"},
@@ -1003,16 +870,12 @@ local proptypes = {
     ["models/props_phx/construct/glass/glass_plate1x1.mdl"] = {["tilebuild_proptype"] = "glass"},
     ["models/props_phx/construct/windows/window1x1.mdl"] = {["tilebuild_proptype"] = "strongglass"},
     ["models/props_phx/construct/plastic/plastic_panel1x1.mdl"] = {["tilebuild_proptype"] = "floatyplastic"},
-
 }
 
 
 
 function TOOL.BuildCPanel( DForm )
-
-
     if GetConVar("tilebuild_sprops"):GetFloat() == 1 then
-
         proptypes = {
             ["models/squad/sf_plates/sf_plate4x4.mdl"] = {["tilebuild_proptype"] = "superflat"},
             ["models/props_phx/construct/metal_plate1.mdl"] = {["tilebuild_proptype"] = "steel"},
@@ -1044,9 +907,6 @@ function TOOL.BuildCPanel( DForm )
     DForm:CheckBox( "Dynamic Snapping", "tilebuild_dynamicsnap" )
     DForm:ControlHelp("Attempts to sync grid with targeted prop.")
 
-    --[[DForm:CheckBox( "Debug mode.", "tilebuild_debug" )
-    DForm:ControlHelp("Not recommended if you have a slow PC. Or at all really.")]]
-
     DForm:NumSlider( "Snap Divisor", "tilebuild_snapdivision", 1, 6, 0)
     DForm:ControlHelp("Shrink the grid by set factor. Creates more snap points.")
 
@@ -1061,6 +921,4 @@ function TOOL.BuildCPanel( DForm )
     })
 
     DForm.Material = DForm:MatSelect("tilebuild_material", list.Get("tilebuildmaterials"), true, 0.25, 0.25)
-
-
 end
