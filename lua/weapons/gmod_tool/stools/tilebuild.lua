@@ -352,7 +352,7 @@ local function getdragmove( pos, snapdist, prop, proppos )
     return movecounts, localmove
 end
 
-local function getpropdirscale( prop )
+local function getpropdirscale( prop, dir )
     local dir = dir:GetNormalized()
     local forward = prop:GetForward()
     local up = prop:GetUp()
