@@ -496,7 +496,7 @@ function TOOL:Think()
 
         else
             snapamount = snapamount or 0
-            if hitpos:Distance(ply.tilebuild_dynamicsnappos) > snapamount / 2 then
+            if hitpos:Distance(ply.tilebuild_dynamicsnappos or hitpos) > snapamount / 2 then
 
                 if hitpos:Distance(center + targetprop:GetUp()) > hitpos:Distance(center + targetprop:GetUp() * -1) then
                     local stepstone = diffmin
