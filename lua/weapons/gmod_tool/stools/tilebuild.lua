@@ -479,8 +479,9 @@ function TOOL:Think()
     local center = targetprop:WorldSpaceCenter()
     local diffmin, diffmax = noAABB
 
-    if targetprop ~= game.GetWorld() then
-        local min, max = targetprop:GetPhysicsObject():GetAABB()
+    local phys = targetprop:GetPhysicsObject()
+    if targetprop ~= game.GetWorld() and IsValid(phys) then
+        local min, max = phys:GetAABB()
         diffmin = min
         diffmax = max
     end
