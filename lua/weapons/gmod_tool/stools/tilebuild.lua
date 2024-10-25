@@ -220,7 +220,7 @@ local function tbmakeprop(ply, model, color, pos, angle, mat)
     ply.tilebuild_prop:SetRenderMode(1)
     ply.tilebuild_prop:SetColor(color)
     ply.tilebuild_prop:SetMaterial(mat)
-    if CPPI_DEFER ~= nil then ply.tilebuild_prop:CPPISetOwner(ply) end
+    if CPPI ~= nil then ply.tilebuild_prop:CPPISetOwner(ply) end
     if not (color.a < 255) then ply.tilebuild_prop:SetRenderMode( 0 ) end
     ply.tilebuild_prop:GetPhysicsObject():EnableMotion(false)
 
@@ -307,7 +307,7 @@ end
 local function tbsnaptogrid(ent, ply)
     if CLIENT then return end
 
-    if CPPI_DEFER ~= nil then
+    if CPPI ~= nil then
         if ent:CPPIGetOwner() ~= ply then return end
     end
 
@@ -317,7 +317,7 @@ local function tbsnaptogrid(ent, ply)
 
         local tool = ply:GetTool('tilebuild')
 
-        currentproptype = platetable[tostring(tool:GetClientInfo("proptype"))] or platetable["plastic"]
+        local currentproptype = platetable[tostring(tool:GetClientInfo("proptype"))] or platetable["plastic"]
 
         if ent:GetClass() == "prop_physics" and ent:GetColor() ~= Color(0, 255, 0) then
 
@@ -400,7 +400,7 @@ local function rightclickdrag(ply, dynamic)
         if ply.tilebuild_prop:GetClass() ~= "prop_physics" or ply.tilebuild_dragoffset == nil then return end
 
         local cursor = (tr.Normal * ply.tilebuild_dist) + ply:EyePos() - ply.tilebuild_dragoffset
-        local snapdist = ply.tilebuild_currentproptype[5] or 0
+        local snapdist = ply.tilebuild_currentproptype and ply.tilebuild_currentproptype[5] or 0
         local move, localmove = getdragmove(cursor, snapdist, ply.tilebuild_prop, ply.tilebuild_prop:GetPos())
         local totalmove = move * snapdist
         local scale = getpropdirscale(ply.tilebuild_prop, move) or snapdist
