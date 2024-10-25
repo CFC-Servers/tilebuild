@@ -378,25 +378,24 @@ end
 local function rightclickdrag(ply, dynamic)
     if ply.tilebuild_active or not ply:KeyDown(IN_ATTACK2) and engine.TickCount() % 5 == 0 then ply.tilebuild_dragoffset = nil return end
 
-    if CPPI_DEFER ~= nil then
-        if ent:CPPIGetOwner() ~= ply then return end
-    end
-
     local tr = ply:GetEyeTrace()
+    local ent = IsValid(tr.Entity) and tr.Entity or ply.tilebuild_prop
+    if not IsValid(ent) then return end
+    if CPPI ~= nil and ent:CPPIGetOwner() ~= ply then return end
 
     if ply:KeyPressed(IN_ATTACK2) then
-        if not dynamic then tbsnaptogrid(tr.Entity, ply) end
+        if not dynamic then tbsnaptogrid(ent, ply) end
 
-        ply.tilebuild_prop = tr.Entity
+        ply.tilebuild_prop = ent
         ply.tilebuild_dist = tr.StartPos:Distance(tr.HitPos)
         ply.tilebuild_startpos = tr.HitPos
-        ply.tilebuild_dragoffset = tr.HitPos - tr.Entity:GetPos()
-        ply:SetNW2Int("tilebuild_prop", tr.Entity:EntIndex())
+        ply.tilebuild_dragoffset = tr.HitPos - ent:GetPos()
+        ply:SetNW2Int("tilebuild_prop", ent:EntIndex())
 
-        if not tr.Entity.tilebuild_dragstart then tr.Entity.tilebuild_dragstart = tr.Entity:GetPos() end
+        if not ent.tilebuild_dragstart then ent.tilebuild_dragstart = ent:GetPos() end
     end
 
-    if SERVER and IsValid(ply.tilebuild_prop) then
+    if IsValid(ply.tilebuild_prop) then
 
         if ply.tilebuild_prop:GetClass() ~= "prop_physics" or ply.tilebuild_dragoffset == nil then return end
 
@@ -463,9 +462,9 @@ function TOOL:Think()
         end
     end
 
-    rightclickdrag(ply, self:GetClientNumber("dynamicsnap") == 1)
-
     if CLIENT then return end
+
+    rightclickdrag(ply, self:GetClientNumber("dynamicsnap") == 1)
 
     if not IsValid(ply.tilebuild_prop) and ply.tilebuild_active then
         ply.tilebuild_active = false
