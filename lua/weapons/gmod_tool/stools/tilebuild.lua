@@ -753,7 +753,7 @@ hook.Add("PostDrawTranslucentRenderables", "tilebuildclienteffects", function(bd
     local div = tool:GetClientNumber("snapdivision")
 
     if active then
-        if (ply.tilebuild_hitent:GetClass() ~= "prop_physics") then ply.tilebuild_clstartpos = ply:GetNW2Vector("tilebuild_startpos") end
+        if (ply.tilebuild_hitent and ply.tilebuild_hitent:GetClass() ~= "prop_physics") then ply.tilebuild_clstartpos = ply:GetNW2Vector("tilebuild_startpos") end
 
         if tool:GetClientNumber("dynamicsnap") == 0 then
             ply.tilebuild_clstartpos = Vector(
