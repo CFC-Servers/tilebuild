@@ -278,7 +278,7 @@ function TOOL:LeftClick(tr)
             end
         end
     else
-        if IsValid(ply.tilebuild_prop) and SERVER then
+        if SERVER and IsValid(ply.tilebuild_prop) and ply.tilebuild_startpos then
             local fixpos = ply.tilebuild_startpos - findclosestcorner(ply.tilebuild_prop, ply.tilebuild_startpos)
             local model = ply.tilebuild_prop:GetModel()
             local pos = ply.tilebuild_prop:GetPos()
