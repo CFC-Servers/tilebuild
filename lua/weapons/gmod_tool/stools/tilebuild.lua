@@ -473,6 +473,7 @@ function TOOL:Think()
 
     --start of Dynamic Point Snapping
     targetprop = ply.tilebuild_targetprop
+    if not IsValid(targetprop) then return end
     local snapamount = (currentproptype[5] / self:GetClientNumber("snapdivision"))
     local startpos = ply.tilebuild_startpos
     local center = targetprop:WorldSpaceCenter()
