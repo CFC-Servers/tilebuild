@@ -535,7 +535,7 @@ function TOOL:Think()
     ply:SetNW2Vector("tilebuild_dynamicsnappos", ply.tilebuild_dynamicsnappos)
     --end of Dynamic Point Snapping
 
-    if ply.tilebuild_active then
+    if ply.tilebuild_active and startpos then
         local endpos = (ply:GetAimVector() * ply.tilebuild_dist + ply:EyePos())
             endpos = endpos + (targetprop:GetPos() - startpos)
             endpos = targetprop:WorldToLocal(endpos) + startpos
